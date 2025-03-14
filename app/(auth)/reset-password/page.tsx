@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { resetPassword } from "@/lib/supabase/auth";
+import { AuthError } from "@/lib/supabase/auth";
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
@@ -38,16 +40,16 @@ export default function ResetPasswordPage() {
       // Set loading state
       setIsLoading(true);
       
-      // This is a placeholder for the actual password reset API call
-      // TODO: Replace with actual implementation
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Call Supabase reset password
+      await resetPassword(email);
       
       // Show success message
       setIsSuccess(true);
       
     } catch (err) {
       // Handle errors
-      setError("Failed to send reset instructions. Please try again.");
+      const authError = err as AuthError;
+      setError(authError.message || "Failed to send reset instructions. Please try again.");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -92,7 +94,7 @@ export default function ResetPasswordPage() {
                   type="email"
                   placeholder="name@example.com"
                   value={email}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
                 />

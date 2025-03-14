@@ -10,9 +10,13 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { AlertCircle } from "lucide-react";
+import { signIn } from "@/lib/supabase/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthError } from "@/lib/supabase/auth";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -35,17 +39,19 @@ export default function LoginPage() {
       // Set loading state
       setIsLoading(true);
       
-      // This is a placeholder for the actual authentication API call
-      // TODO: Replace with actual auth implementation
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Perform Supabase authentication
+      await signIn(email, password);
       
-      // Simulate successful login and redirect
-      // In a real app, this would happen after successful auth
+      // Refresh the user context to update the UI
+      await refreshUser();
+      
+      // Redirect to the dashboard after successful login
       router.push("/");
       
     } catch (err) {
       // Handle authentication errors
-      setError("Invalid email or password. Please try again.");
+      const authError = err as AuthError;
+      setError(authError.message || "Invalid email or password. Please try again.");
       console.error(err);
     } finally {
       setIsLoading(false);
