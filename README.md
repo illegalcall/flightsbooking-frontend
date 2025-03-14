@@ -112,3 +112,96 @@ flight-booking-system/
 ├── tsconfig.json                    # TypeScript configuration
 ├── package.json                     # Dependencies and scripts
 └── README.md                        # Project documentation
+```
+
+# FlightsBooking Frontend
+
+This is the frontend application for the FlightsBooking platform, built with Next.js, Supabase, and Tailwind CSS.
+
+## Authentication System
+
+The application uses Supabase for authentication with the following features:
+
+- Email and password authentication
+- Protected routes
+- Auth state management with React Context
+- Route redirection based on authentication status
+
+### Auth Components
+
+- **AuthContext**: Provides authentication state and methods throughout the application
+- **ProtectedRoute**: HOC that redirects unauthenticated users to the login page
+- **AuthRedirect**: HOC that redirects authenticated users away from auth pages
+
+## Route Protection
+
+Routes are protected using the following structure:
+
+1. Public routes: Accessible to all users
+2. Auth routes: Only accessible to unauthenticated users (login, register)
+3. Protected routes: Only accessible to authenticated users (dashboard, profile)
+
+### Implementation
+
+- **`app/(dashboard)/layout.tsx`**: Uses the `ProtectedRoute` component to protect all dashboard routes
+- **`app/(auth)/layout.tsx`**: Uses the `AuthRedirect` component to redirect authenticated users away from auth pages
+- **`middleware.ts`**: Server-side protection using Next.js middleware for additional security
+
+## Supabase Auth Functions
+
+The following auth functions are available:
+
+- `signUp(email, password)`: Register a new user
+- `signIn(email, password)`: Sign in an existing user
+- `signOut()`: Sign out the current user
+- `resetPassword(email)`: Send a password reset email
+- `updatePassword(newPassword)`: Update the user's password
+- `getCurrentUser()`: Get the current user
+- `getCurrentSession()`: Get the current session
+
+### Handling Logout
+
+The application implements a robust logout mechanism that ensures:
+
+1. The Supabase token is completely removed from localStorage
+2. The AuthContext state is immediately updated
+3. All auth-related data is properly cleared
+4. The UI is instantly updated to reflect the logged-out state
+
+## Usage
+
+To use authentication in your components:
+
+```tsx
+import { useAuth } from '@/contexts/AuthContext';
+
+export default function MyComponent() {
+  const { user, isLoading, signOut } = useAuth();
+  
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  
+  return (
+    <div>
+      {user ? (
+        <>
+          <p>Welcome, {user.email}</p>
+          <button onClick={signOut}>Sign out</button>
+        </>
+      ) : (
+        <p>Please sign in</p>
+      )}
+    </div>
+  );
+}
+```
+
+## Environment Variables
+
+The following environment variables are required:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```

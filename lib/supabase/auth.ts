@@ -47,13 +47,25 @@ export async function signIn(email: string, password: string) {
 
 export async function signOut() {
   try {
-    const { error } = await supabase.auth.signOut({
-      scope: 'local' // Clear local session but not global user session
-    });
+    // Sign out from Supabase and clear all sessions
+    const { error } = await supabase.auth.signOut();
     
     if (error) {
       throw { message: error.message, status: error.status };
     }
+    
+    // Clear any stored session data
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('sb-auth-token');
+      
+      // Clear any other auth-related data
+      const authKeys = Object.keys(localStorage).filter(key => 
+        key.startsWith('sb-') || key.includes('supabase')
+      );
+      
+      authKeys.forEach(key => localStorage.removeItem(key));
+    }
+    
     return true;
   } catch (err) {
     const error = err as AuthError;

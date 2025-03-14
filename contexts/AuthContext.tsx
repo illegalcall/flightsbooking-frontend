@@ -47,11 +47,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log("Auth state changed:", event);
-        setSession(newSession);
         
-        // Update user info when auth state changes
-        const currentUser = await getCurrentUser();
-        setUser(currentUser);
+        if (event === 'SIGNED_OUT') {
+          // Clear state immediately on sign out
+          setUser(null);
+          setSession(null);
+        } else {
+          setSession(newSession);
+          
+          // Update user info when auth state changes
+          const currentUser = await getCurrentUser();
+          setUser(currentUser);
+        }
       }
     );
 
@@ -77,8 +84,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const handleSignOut = async () => {
     try {
       await signOut();
+      
+      // Clear state immediately
       setUser(null);
       setSession(null);
+      
+      // Force refresh from server
+      await refreshUser();
+      
       return true;
     } catch (error) {
       console.error('Error signing out:', error);

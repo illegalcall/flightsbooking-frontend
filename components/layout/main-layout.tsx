@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Navbar } from "@/components/ui/navbar";
+import { Navbar } from "@/components/layout/navbar";
 
 interface MainLayoutProps {
   children: React.ReactNode;
