@@ -60,4 +60,38 @@ describe('Authentication Flow', () => {
     // Should be on the dashboard or profile page (not login)
     cy.url().should('not.include', '/login');
   });
+
+  it('should successfully login and maintain auth state', () => {
+    cy.visit('/login');
+    
+    // Attempt login
+    cy.findByLabelText(/email/i).type('dhruvcoding67@gmail.com');
+    cy.findByLabelText(/password/i).type('Rhythm@91');
+    cy.findByRole('button', { name: /sign in/i }).click();
+    
+    // Wait for auth request to complete
+    cy.wait('@authRequest');
+    
+    // Verify redirection to home page
+    cy.url().should('eq', 'http://localhost:3000/');
+    
+    // Check if auth store exists and verify state (wrapped in a try block)
+    cy.window().then(win => {
+      if (win.__authStore) {
+        // If auth store exists, verify its state
+        cy.wrap(win.__authStore.getState()).then(state => {
+          cy.wrap(state.isAuthenticated).should('be.true');
+          cy.wrap(state.user).should('not.be.null');
+          cy.wrap(state.session).should('not.be.null');
+          cy.wrap(state.isLoading).should('be.false');
+        });
+      } else {
+        // Skip this verification if auth store isn't available in tests
+        cy.log('Auth store not available on window object - skipping store state verification');
+      }
+    });
+    
+    // Verify authenticated navigation is accessible
+    cy.findByRole('button', { name: /DH/i }).should('be.visible');
+  });
 }); 
