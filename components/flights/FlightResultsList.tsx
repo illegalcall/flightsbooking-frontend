@@ -157,7 +157,7 @@ function FlightCard({ flight }: { flight: FlightSearchResult }) {
   
   // Format duration from minutes to hours and minutes
   const formatDuration = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60);
+    const hours = Math.trunc(minutes / 60);
     const mins = minutes % 60;
     return `${hours}h ${mins}m`;
   };
