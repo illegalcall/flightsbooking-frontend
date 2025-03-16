@@ -5,8 +5,8 @@ describe('Flight Search', () => {
   });
 
   it('should display the flight search form', () => {
-    // Verify that the form elements are visible
-    cy.findByRole('heading', { name: /search flights/i }).should('be.visible');
+    // Verify that the form elements are visible - using more specific selectors
+    cy.get('h1').contains(/search flights/i).should('be.visible');
     cy.get('label').contains(/from/i).should('be.visible');
     cy.get('label').contains(/to/i).should('be.visible');
     cy.get('label').contains(/departure date/i).should('be.visible');
@@ -19,7 +19,7 @@ describe('Flight Search', () => {
     
     // Form should not be submitted due to HTML validation
     // We should still be on the same page with the form
-    cy.findByRole('heading', { name: /search flights/i }).should('be.visible');
+    cy.get('h1').contains(/search flights/i).should('be.visible');
     cy.findByRole('button', { name: /search flights/i }).should('be.visible');
   });
 

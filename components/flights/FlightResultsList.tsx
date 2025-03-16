@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface FlightResultsListProps {
   results: FlightSearchResult[];
@@ -116,6 +117,11 @@ export default function FlightResultsList({ results, isLoading }: FlightResultsL
 
 function FlightCard({ flight }: { flight: FlightSearchResult }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const router = useRouter();
+  
+  const handleSelectFlight = () => {
+    router.push(`/flights/booking/${flight.id}`);
+  };
   
   // Format origin and destination to handle objects
   const formatLocation = (location: unknown): string => {
@@ -213,7 +219,7 @@ function FlightCard({ flight }: { flight: FlightSearchResult }) {
           </CollapsibleTrigger>
           <div className="flex items-center gap-2">
             <span className="text-2xl font-bold">${price}</span>
-            <Button size="sm">Select</Button>
+            <Button size="sm" onClick={handleSelectFlight}>Select</Button>
           </div>
         </div>
         <CollapsibleContent className="px-6 pb-4">

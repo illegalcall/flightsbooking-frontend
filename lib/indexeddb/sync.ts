@@ -79,7 +79,7 @@ const refreshCachedSearch = async (query: string): Promise<void> => {
     if (cachedResults) {
       // If we have cached results, refresh them
       const freshResults = await searchFlights(JSON.parse(query));
-      await saveFlightSearchResults(query, freshResults);
+      await saveFlightSearchResults(query, freshResults.data);
     }
   } catch (error) {
     console.error(`Error refreshing cached search for query ${query}:`, error);

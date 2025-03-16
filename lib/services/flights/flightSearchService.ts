@@ -321,11 +321,14 @@ async function cacheFlightResults(searchParams: FlightSearchFormData, paginatedR
       }
     }
     
+    //TODO: Fix
     // Update metadata
-    await db.put('metadata', {
-      key: 'lastUpdated',
-      value: new Date().toISOString()
-    });
+    // const txMetadata = db.transaction('metadata', 'readwrite');
+    // await txMetadata.store.put({
+    //   key: 'lastUpdated',
+    //   value: new Date().toISOString()
+    // });
+    // await txMetadata.done;
     
     await tx.done;
     console.log('Flight results cached successfully');

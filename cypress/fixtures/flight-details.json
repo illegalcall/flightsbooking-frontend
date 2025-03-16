@@ -1,0 +1,25 @@
+{
+  "id": "flight-123",
+  "airline": "Test Airways",
+  "flightNumber": "TA123",
+  "origin": {
+    "code": "LAX",
+    "city": "Los Angeles",
+    "name": "Los Angeles International Airport"
+  },
+  "destination": {
+    "code": "JFK",
+    "city": "New York",
+    "name": "John F. Kennedy International Airport"
+  },
+  "departureTime": "2023-12-01T08:00:00Z",
+  "arrivalTime": "2023-12-01T16:00:00Z",
+  "duration": "8h 00m",
+  "aircraft": "Boeing 787",
+  "price": 350,
+  "basePrice": 300,
+  "cabinClass": "Economy",
+  "availableSeats": 42,
+  "stops": 0,
+  "features": ["WiFi", "USB Power", "In-flight Entertainment"]
+} 
