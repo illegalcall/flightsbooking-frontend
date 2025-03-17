@@ -107,11 +107,17 @@ const useAuthStore = create<AuthState>((set) => ({
 
   refreshAuth: async () => {
     try {
+      console.log("Auth Store: Starting refreshAuth");
       set({ isLoading: true });
       const [currentUser, currentSession] = await Promise.all([
         getCurrentUser(),
         getCurrentSession()
       ]);
+      
+      console.log("Auth Store: refreshAuth completed", { 
+        userExists: !!currentUser, 
+        sessionExists: !!currentSession 
+      });
       
       set({ 
         user: currentUser, 
@@ -120,6 +126,7 @@ const useAuthStore = create<AuthState>((set) => ({
         isLoading: false 
       });
     } catch (error) {
+      console.error("Auth Store: refreshAuth error", error);
       set({ 
         user: null, 
         session: null, 

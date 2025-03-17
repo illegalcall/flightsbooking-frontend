@@ -1,9 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase/client';
-import { getCurrentUser, getCurrentSession, signOut } from '@/lib/supabase/auth';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase/client";
+import {
+  getCurrentUser,
+  getCurrentSession,
+  signOut,
+} from "@/lib/supabase/auth";
 
 interface AuthContextType {
   user: User | null;
@@ -25,17 +29,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       try {
         setIsLoading(true);
-        
+
         // Fetch fresh data from Supabase
         const [currentUser, currentSession] = await Promise.all([
           getCurrentUser(),
-          getCurrentSession()
+          getCurrentSession(),
         ]);
-        
+
         setUser(currentUser);
         setSession(currentSession);
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error("Error initializing auth:", error);
       } finally {
         setIsLoading(false);
       }
@@ -47,14 +51,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log("Auth state changed:", event);
-        
-        if (event === 'SIGNED_OUT') {
+
+        if (event === "SIGNED_OUT") {
           // Clear state immediately on sign out
           setUser(null);
           setSession(null);
         } else {
           setSession(newSession);
-          
+
           // Update user info when auth state changes
           const currentUser = await getCurrentUser();
           setUser(currentUser);
@@ -71,30 +75,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const [currentUser, currentSession] = await Promise.all([
         getCurrentUser(),
-        getCurrentSession()
+        getCurrentSession(),
       ]);
-      
+
       setUser(currentUser);
       setSession(currentSession);
     } catch (error) {
-      console.error('Error refreshing user:', error);
+      console.error("Error refreshing user:", error);
     }
   };
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      
+
       // Clear state immediately
       setUser(null);
       setSession(null);
-      
+
       // Force refresh from server
       await refreshUser();
-      
+
       return true;
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
       return false;
     }
   };
@@ -104,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     isLoading,
     signOut: handleSignOut,
-    refreshUser
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -113,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-} 
+}

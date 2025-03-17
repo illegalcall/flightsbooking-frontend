@@ -186,7 +186,10 @@ class FlightSearchWorkerService {
   }
 
   // Helper function to convert duration string to minutes
-  private durationToMinutes(duration: string): number {
+  private durationToMinutes(duration: string | number): number {
+    // If duration is already a number, return it
+    if (typeof duration === 'number') return duration;
+    
     const match = duration.match(/(\d+)h\s*(\d+)m/);
     if (!match) return 0;
     
