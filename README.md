@@ -116,92 +116,174 @@ flight-booking-system/
 
 # FlightsBooking Frontend
 
-This is the frontend application for the FlightsBooking platform, built with Next.js, Supabase, and Tailwind CSS.
+A modern, feature-rich flight booking platform built with Next.js, React, and TypeScript, offering a seamless experience for travelers to search, book, and manage their flight reservations.
 
-## Authentication System
+![FlightsBooking Platform](https://placehold.co/600x400?text=FlightsBooking+Platform)
 
-The application uses Supabase for authentication with the following features:
+## Features
 
-- Email and password authentication
-- Protected routes
-- Auth state management with React Context
-- Route redirection based on authentication status
+- **User Authentication**: Secure login, registration, password reset, and email verification
+- **Flight Search**: Intuitive interface to search flights with filters for dates, destinations, and prices
+- **Booking Management**: View, modify, and cancel bookings
+- **Seat Selection**: Interactive seat map for choosing seats
+- **Payment Processing**: Secure payment integration with Stripe
+- **User Profiles**: Manage personal information and preferences
+- **Admin Dashboard**: Manage flights, bookings, and users (admin-only)
+- **Responsive Design**: Optimized for all devices from mobile to desktop
+- **Offline Capabilities**: Basic functionality even without internet connection
 
-### Auth Components
+## Technology Stack
 
-- **AuthContext**: Provides authentication state and methods throughout the application
-- **ProtectedRoute**: HOC that redirects unauthenticated users to the login page
-- **AuthRedirect**: HOC that redirects authenticated users away from auth pages
+- **Framework**: Next.js 15 with App Router
+- **Frontend**: React 19, TypeScript
+- **State Management**: Zustand
+- **Styling**: Tailwind CSS with shadcn/ui components
+- **Authentication**: Supabase Auth
+- **Payment Processing**: Stripe
+- **Form Handling**: React Hook Form with Zod validation
+- **Testing**: Jest, React Testing Library, Cypress
 
-## Route Protection
+## Architecture
 
-Routes are protected using the following structure:
+### Frontend Structure
 
-1. Public routes: Accessible to all users
-2. Auth routes: Only accessible to unauthenticated users (login, register)
-3. Protected routes: Only accessible to authenticated users (dashboard, profile)
+The application follows Next.js App Router architecture with route groups:
 
-### Implementation
+- `(public)`: Routes accessible without authentication
+- `(auth)`: Authentication-related routes
+- `(dashboard)`: Protected routes requiring authentication
 
-- **`app/(dashboard)/layout.tsx`**: Uses the `ProtectedRoute` component to protect all dashboard routes
-- **`app/(auth)/layout.tsx`**: Uses the `AuthRedirect` component to redirect authenticated users away from auth pages
-- **`middleware.ts`**: Server-side protection using Next.js middleware for additional security
+### Key Components
 
-## Supabase Auth Functions
+- **Services Layer**: API integration with backend services
+- **Hooks**: Custom React hooks for shared functionality
+- **Contexts**: Global state and shared data across components
+- **Components**: Reusable UI components
 
-The following auth functions are available:
+### Data Flow
 
-- `signUp(email, password)`: Register a new user
-- `signIn(email, password)`: Sign in an existing user
-- `signOut()`: Sign out the current user
-- `resetPassword(email)`: Send a password reset email
-- `updatePassword(newPassword)`: Update the user's password
-- `getCurrentUser()`: Get the current user
-- `getCurrentSession()`: Get the current session
+1. **User Interaction**: User interacts with the UI
+2. **State Management**: Zustand stores handle local state
+3. **API Integration**: Services make requests to the backend
+4. **Data Rendering**: Components update based on API responses
 
-### Handling Logout
+## User Flow
 
-The application implements a robust logout mechanism that ensures:
+1. **Search**: Users search for flights by entering origin, destination, and dates
+2. **Selection**: Users select from available flights based on preferences
+3. **Booking**: Users enter passenger details and select seats
+4. **Payment**: Users complete payment via Stripe integration
+5. **Confirmation**: Users receive booking confirmation and access to manage booking
 
-1. The Supabase token is completely removed from localStorage
-2. The AuthContext state is immediately updated
-3. All auth-related data is properly cleared
-4. The UI is instantly updated to reflect the logged-out state
+## Design Decisions and Tradeoffs
 
-## Usage
+### Next.js App Router
 
-To use authentication in your components:
+**Benefits**:
+- Server-side rendering for improved SEO and performance
+- Built-in API routes for server-side operations
+- Simplified routing with file-based system
 
-```tsx
-import { useAuth } from '@/contexts/AuthContext';
+**Tradeoffs**:
+- Learning curve for developers new to App Router
+- Some limitations with third-party libraries integration
 
-export default function MyComponent() {
-  const { user, isLoading, signOut } = useAuth();
-  
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-  
-  return (
-    <div>
-      {user ? (
-        <>
-          <p>Welcome, {user.email}</p>
-          <button onClick={signOut}>Sign out</button>
-        </>
-      ) : (
-        <p>Please sign in</p>
-      )}
-    </div>
-  );
-}
+### Component Library (shadcn/ui)
+
+**Benefits**:
+- Consistent design language across the application
+- Customizable components that maintain accessibility
+- Reduced development time for common UI elements
+
+**Tradeoffs**:
+- Additional bundle size from component library
+- Some customization limitations
+
+### State Management with Zustand
+
+**Benefits**:
+- Lightweight and performant compared to Redux
+- Simple API with minimal boilerplate
+- TypeScript support for type safety
+
+**Tradeoffs**:
+- Less ecosystem support compared to Redux
+- Limited middleware options
+
+### Authentication with Supabase
+
+**Benefits**:
+- Ready-to-use authentication system
+- OAuth integrations for social login
+- Security features like 2FA
+
+**Tradeoffs**:
+- Vendor lock-in with Supabase
+- Limited customization of authentication flow
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v18 or later)
+- npm or yarn
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/flightsbooking-frontend.git
+
+# Navigate to project directory
+cd flightsbooking-frontend
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your configuration
 ```
 
-## Environment Variables
+### Development
 
-The following environment variables are required:
+```bash
+# Start development server
+npm run dev
 
+# Run tests
+npm test
+
+# Run end-to-end tests
+npm run test:e2e
 ```
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+### Build for Production
+
+```bash
+# Build the application
+npm run build
+
+# Start production server
+npm start
 ```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add some amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- [Next.js](https://nextjs.org/) - The React Framework
+- [shadcn/ui](https://ui.shadcn.com/) - UI Components
+- [Tailwind CSS](https://tailwindcss.com/) - CSS Framework
+- [Supabase](https://supabase.com/) - Backend as a Service
+- [Stripe](https://stripe.com/) - Payment Processing

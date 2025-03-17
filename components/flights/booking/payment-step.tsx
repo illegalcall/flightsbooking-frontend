@@ -286,7 +286,7 @@ function PaymentForm({ bookingData, onComplete, onBack }: PaymentStepProps) {
     };
     
     createBookingAndPaymentIntent();
-  }, [bookingData.passengers, bookingData.selectedSeats, calculateTotal]);
+  }, [bookingData.passengers, bookingData.selectedSeats, bookingData.contactInfo?.email, calculateTotal]);
   
   const handlePaymentSubmit = async () => {
     if (!stripe || !elements) {
