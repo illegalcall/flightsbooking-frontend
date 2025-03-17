@@ -39,17 +39,22 @@ interface Airport {
 
 interface FlightDetails {
   id: string;
-  airline: string;
   flightNumber: string;
-  origin: Airport;
-  destination: Airport;
+  airline: string;
+  aircraftType: string;
   departureTime: string;
   arrivalTime: string;
   duration: string;
+  originId: string;
+  destinationId: string;
+  basePrice: number;
+  calculatedPrice: number;
+  origin: Airport;
+  destination: Airport;
+  status: string;
+  cabinClass: string;
   aircraft: string;
   price: number;
-  basePrice?: number;
-  cabinClass: string;
 }
 
 interface PassengerData {

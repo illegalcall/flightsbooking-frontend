@@ -12,7 +12,7 @@ interface PriceBreakdownProps {
 }
 
 export function PriceBreakdown({ bookingData, className }: PriceBreakdownProps) {
-  const baseFare = bookingData.flightDetails?.price || 0;
+  const baseFare = bookingData.flightDetails?.calculatedPrice || bookingData.flightDetails?.basePrice || 0;
   const seatPrice = bookingData.selectedSeats.reduce((total, seat) => total + seat.price, 0);
   const addonPrice = bookingData.addons.reduce((total, addon) => total + addon.price, 0);
   

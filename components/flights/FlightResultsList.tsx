@@ -56,12 +56,9 @@ export default function FlightResultsList({ results, isLoading }: FlightResultsL
   const sortedResults = [...results].sort((a, b) => {
     switch (sortOption) {
       case 'price':
-        return a.price - b.price;
+        return a.calculatedPrice - b.calculatedPrice;
       case 'duration':
-        // Convert duration to string if it's a number
-        const durationA = typeof a.duration === 'number' ? String(a.duration) : a.duration;
-        const durationB = typeof b.duration === 'number' ? String(b.duration) : b.duration;
-        return durationA.localeCompare(durationB);
+        return a.duration - b.duration;
       case 'departure':
         return a.departureTime.localeCompare(b.departureTime);
       default:
@@ -116,6 +113,7 @@ export default function FlightResultsList({ results, isLoading }: FlightResultsL
 }
 
 function FlightCard({ flight }: { flight: FlightSearchResult }) {
+  console.log("🚀 ~ FlightCard ~ flight:", flight)
   const [detailsOpen, setDetailsOpen] = useState(false);
   const router = useRouter();
   
@@ -123,28 +121,8 @@ function FlightCard({ flight }: { flight: FlightSearchResult }) {
     router.push(`/flights/booking/${flight.id}`);
   };
   
-  // Format origin and destination to handle objects
-  const formatLocation = (location: unknown): string => {
-    if (typeof location === 'string') {
-      return location;
-    }
-    
-    // Handle case where location is an object
-    if (location && typeof location === 'object') {
-      // Check if it has a code or name property (common for airport objects)
-      const locationObj = location as Record<string, unknown>;
-      if ('name' in locationObj && typeof locationObj.name === 'string') {
-        return locationObj.name;
-      } else if ('code' in locationObj && typeof locationObj.code === 'string') {
-        return locationObj.code;
-      } else {
-        console.warn('Invalid location object:', location);
-        return 'Unknown';
-      }
-    }
-    
-    return 'Unknown';
-  };
+  const originText = flight.origin ? `${flight.origin.code} - ${flight.origin.city}` : '';
+  const destinationText = flight.destination ? `${flight.destination.code} - ${flight.destination.city}` : '';
   
   // Format date for display (e.g., "09:45 AM")
   const formatTime = (dateString: string): string => {
@@ -168,15 +146,9 @@ function FlightCard({ flight }: { flight: FlightSearchResult }) {
     return `${hours}h ${mins}m`;
   };
   
-  const originText = formatLocation(flight.origin);
-  const destinationText = formatLocation(flight.destination);
-  
-  // Default values for missing properties
-  const stops = typeof flight.stops === 'number' ? flight.stops : 0;
-  const price = typeof flight.price === 'number' ? flight.price : 0;
-  const duration = typeof flight.duration === 'number' 
-    ? formatDuration(flight.duration) 
-    : (typeof flight.duration === 'string' ? flight.duration : '');
+  // Format duration from minutes to hours and minutes display
+  const formattedDuration = formatDuration(flight.duration);
+  const isDirect = flight.status === 'Direct';
   
   return (
     <Card className="w-full" data-testid="flight-card">
@@ -186,8 +158,8 @@ function FlightCard({ flight }: { flight: FlightSearchResult }) {
             <span className="font-semibold">{flight.airline}</span>
             <span className="text-sm text-muted-foreground">{flight.flightNumber}</span>
           </div>
-          <Badge variant={stops === 0 ? "outline" : "secondary"}>
-            {stops === 0 ? "Direct" : `${stops} Stop${stops > 1 ? 's' : ''}`}
+          <Badge variant={isDirect ? "outline" : "secondary"}>
+            {isDirect ? "Direct" : "Connecting"}
           </Badge>
         </div>
       </CardHeader>
@@ -198,10 +170,10 @@ function FlightCard({ flight }: { flight: FlightSearchResult }) {
             <p className="text-sm">{originText}</p>
           </div>
           <div className="flex flex-col items-center justify-center">
-            <p className="text-xs text-muted-foreground">{duration}</p>
+            <p className="text-xs text-muted-foreground">{formattedDuration}</p>
             <div className="w-full h-px bg-muted my-1"></div>
             <p className="text-xs text-muted-foreground">
-              {stops === 0 ? "Direct Flight" : `${stops} Stop${stops > 1 ? 's' : ''}`}
+              {isDirect ? "Direct Flight" : "Connecting Flight"}
             </p>
           </div>
           <div className="text-right">
@@ -218,7 +190,7 @@ function FlightCard({ flight }: { flight: FlightSearchResult }) {
             </Button>
           </CollapsibleTrigger>
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold">${price}</span>
+            <span className="text-2xl font-bold">${flight.calculatedPrice}</span>
             <Button size="sm" onClick={handleSelectFlight}>Select</Button>
           </div>
         </div>
@@ -236,7 +208,7 @@ function FlightCard({ flight }: { flight: FlightSearchResult }) {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Duration</p>
-                <p>{duration}</p>
+                <p>{formattedDuration}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Aircraft</p>

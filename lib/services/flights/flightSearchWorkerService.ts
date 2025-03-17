@@ -4,7 +4,6 @@ import { FlightSearchResult } from './flightSearchService';
 export interface FilterOptions {
   priceRange?: { min: number; max: number };
   airlines?: string[];
-  stops?: number[];
   departureTimeRange?: { start: string; end: string };
   arrivalTimeRange?: { start: string; end: string };
   directOnly?: boolean;
@@ -128,7 +127,7 @@ class FlightSearchWorkerService {
       // Filter by price range
       if (filters.priceRange) {
         const { min, max } = filters.priceRange;
-        if (flight.price < min || flight.price > max) return false;
+        if (flight.calculatedPrice < min || flight.calculatedPrice > max) return false;
       }
 
       // Filter by airlines
@@ -136,13 +135,8 @@ class FlightSearchWorkerService {
         if (!filters.airlines.includes(flight.airline)) return false;
       }
 
-      // Filter by stops
-      if (filters.stops && filters.stops.length > 0) {
-        if (!filters.stops.includes(flight.stops)) return false;
-      }
-
       // Filter direct flights only
-      if (filters.directOnly && flight.stops > 0) return false;
+      if (filters.directOnly && flight.status !== 'Direct') return false;
 
       // Filter by departure time range
       if (filters.departureTimeRange) {
@@ -167,7 +161,7 @@ class FlightSearchWorkerService {
     sortedFlights.sort((a, b) => {
       switch (sortOption) {
         case 'price':
-          return a.price - b.price;
+          return a.calculatedPrice - b.calculatedPrice;
         case 'duration':
           // Convert duration (e.g., "2h 30m") to minutes for comparison
           const aDuration = this.durationToMinutes(a.duration);

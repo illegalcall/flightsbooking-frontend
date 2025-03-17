@@ -27,17 +27,41 @@ export interface FlightSearchFormData {
   limit?: number;
 }
 
+export interface Airport {
+  id: string;
+  code: string;
+  name: string;
+  city: string;
+  country: string;
+  timezone: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CabinSeatInfo {
+  seats: number;
+  multiplier: number;
+}
+
 export interface FlightSearchResult {
   id: string;
-  airline: string;
   flightNumber: string;
+  airline: string;
+  aircraftType: string;
   departureTime: string;
   arrivalTime: string;
-  origin: string | Record<string, unknown>;
-  destination: string | Record<string, unknown>;
-  duration: string | number;
-  price: number;
-  stops: number;
+  duration: number;
+  originId: string;
+  destinationId: string;
+  basePrice: number;
+  totalSeats: Record<CabinClass, number>;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  origin: Airport;
+  destination: Airport;
+  cabinSeatsWithMultipliers: Record<CabinClass, CabinSeatInfo>;
+  calculatedPrice: number;
 }
 
 export interface PaginatedFlightResults {
@@ -197,19 +221,7 @@ async function searchFlightsFromCache(searchParams: FlightSearchFormData): Promi
 
 // API response type
 interface APIFlightResponse {
-  data: {
-    id: string;
-    airline: string;
-    flightNumber: string;
-    departureTime: string;
-    arrivalTime: string;
-    origin: string;
-    destination: string;
-    duration: string;
-    price: number;
-    stops: number;
-    [key: string]: unknown; // For any additional fields in the API response
-  }[];
+  data: FlightSearchResult[];
   total: number;
   nextCursor?: string;
   hasMore: boolean;
@@ -248,31 +260,9 @@ async function fetchFlightsFromAPI(searchParams: FlightSearchFormData): Promise<
       throw new Error('Invalid API response format');
     }
     
-    // Map API response to our FlightSearchResult format if needed
-    const flights: FlightSearchResult[] = data.data.map((flight) => {
-      // Generate a guaranteed unique ID if it doesn't exist
-      const id = flight.id || `flight-${flight.airline}-${flight.flightNumber}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      
-      // Set a default price if missing or not a number
-      const price = typeof flight.price === 'number' ? flight.price : Math.floor(Math.random() * 200) + 100;
-      
-      return {
-        id,
-        airline: flight.airline,
-        flightNumber: flight.flightNumber,
-        departureTime: flight.departureTime,
-        arrivalTime: flight.arrivalTime,
-        origin: flight.origin,
-        destination: flight.destination,
-        duration: flight.duration,
-        price,
-        stops: typeof flight.stops === 'number' ? flight.stops : 0
-      };
-    });
-    
     // Create paginated results
     const paginatedResults: PaginatedFlightResults = {
-      data: flights,
+      data: data.data,
       total: data.total,
       nextCursor: data.nextCursor,
       hasMore: data.hasMore
