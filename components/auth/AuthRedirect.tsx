@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AuthRedirectProps {
   children: React.ReactNode;
   redirectTo?: string;
 }
 
-export function AuthRedirect({ children, redirectTo = '/' }: AuthRedirectProps) {
+export function AuthRedirect({
+  children,
+  redirectTo = "/",
+}: AuthRedirectProps) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -23,7 +26,7 @@ export function AuthRedirect({ children, redirectTo = '/' }: AuthRedirectProps) 
         setHasTimedOut(true);
       }
     }, 3000); // 3-second timeout
-    
+
     return () => clearTimeout(timeoutId);
   }, [isLoading]);
 
@@ -32,7 +35,7 @@ export function AuthRedirect({ children, redirectTo = '/' }: AuthRedirectProps) 
     if (!isLoading || hasTimedOut) {
       // If user is already authenticated, redirect to the specified path or stored redirect
       if (user) {
-        const redirect = searchParams.get('redirect');
+        const redirect = searchParams.get("redirect");
         if (redirect) {
           console.log("AuthRedirect: Redirecting to stored path:", redirect);
           router.push(redirect);
@@ -56,4 +59,4 @@ export function AuthRedirect({ children, redirectTo = '/' }: AuthRedirectProps) 
 
   // If not loading and user does not exist, render the children
   return !user ? <>{children}</> : null;
-} 
+}

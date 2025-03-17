@@ -12,6 +12,7 @@ export type BookingData = Omit<ApiBookingData, 'passengers'> & {
     passportExpiry: string;
   }>;
   bookingId?: string;
+  bookingReference?: string;
   flightDetails?: {
     id: string;
     airline: string;

@@ -12,7 +12,7 @@ export default function BookingPage({
   const { flightId } = use(params);
   
   return (
-    <div className="container max-w-4xl py-8">
+    <div className="container py-8">
       <h1 className="text-3xl font-bold mb-8">Complete Your Booking</h1>
       <BookingForm flightId={flightId} />
     </div>

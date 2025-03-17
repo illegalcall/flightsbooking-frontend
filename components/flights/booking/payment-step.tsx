@@ -240,13 +240,17 @@ function PaymentForm({ bookingData, onComplete, onBack }: PaymentStepProps) {
         const bookingResponseData = await bookingResponse.json();
         console.log("🚀 ~ createBookingAndPaymentIntent ~ bookingResponseData:", bookingResponseData)
         
-        // Save booking ID to localStorage
+        // Save booking ID and reference to localStorage
         if (bookingResponseData && bookingResponseData.id) {
+          // Use the booking reference from the API if available, otherwise use the booking ID
+          const bookingReference = bookingResponseData.bookingReference || '';
+                                  
           saveBookingData({ 
-            bookingId: bookingResponseData.id 
+            bookingId: bookingResponseData.id,
+            bookingReference: bookingReference
           });
           
-          console.log('Booking created successfully with ID:', bookingResponseData.id);
+          console.log('Booking created successfully with ID:', bookingResponseData.id, 'and reference:', bookingReference);
         } else {
           throw new Error('Invalid response from booking API');
         }

@@ -15,6 +15,7 @@ import { SeatLockTimer } from "./seat-lock-timer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { getBookingData } from "@/utils/localStorage";
 
 interface BookingFormProps {
   flightId: string;
@@ -142,13 +143,16 @@ export function BookingForm({ flightId }: BookingFormProps) {
       setShowLockTimer(true);
     }
     
-    // Generate booking reference when payment is completed
+    // Get booking reference from API when payment is completed
     if (stepData.payment && !bookingData.bookingReference) {
-      const bookingReference = generateBookingReference();
-      setBookingData(prevData => ({
-        ...prevData,
-        bookingReference
-      }));
+      // Get booking reference from localStorage saved during payment processing
+      const storedBookingData = getBookingData();
+      if (storedBookingData.bookingReference) {
+        setBookingData(prevData => ({
+          ...prevData,
+          bookingReference: storedBookingData.bookingReference
+        }));
+      }
     }
     
     // Move to next step if not at the end
@@ -173,17 +177,6 @@ export function BookingForm({ flightId }: BookingFormProps) {
     if (activeStep > 0) {
       setActiveStep(activeStep - 1);
     }
-  };
-
-  // Generate a unique booking reference
-  const generateBookingReference = () => {
-    const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let result = '';
-    // Generate a 6-character booking reference
-    for (let i = 0; i < 6; i++) {
-      result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    return result;
   };
   
   // Handle seat lock expiration

@@ -1,5 +1,7 @@
 "use client"
-import { useState, useEffect } from "react";
+import { AirportAutocomplete } from "@/components/airports/AirportAutocomplete";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -7,21 +9,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FlightSearchFormData } from "@/lib/services/flights/flightSearchService";
-import FlightResultsList from "./FlightResultsList";
+import { Switch } from "@/components/ui/switch";
 import useFlightSearch from "@/hooks/useFlightSearch";
 import useIndexedDB from "@/hooks/useIndexedDB";
-import { CabinClass } from "@/lib/services/flights/flightSearchService";
-import { AirportAutocomplete } from "@/components/airports/AirportAutocomplete";
+import { CabinClass, FlightSearchFormData } from "@/lib/services/flights/flightSearchService";
+import { useEffect, useState } from "react";
+import FlightResultsList from "./FlightResultsList";
 
 export default function FlightSearchForm() {
   // Default form state
@@ -151,7 +149,7 @@ export default function FlightSearchForm() {
   };
 
   // Calculate total passengers
-  const totalPassengers = formData.passengers;
+  // const totalPassengers = formData.passengers;
 
   return (
     <div className="space-y-6">
@@ -220,8 +218,8 @@ export default function FlightSearchForm() {
               </div>
             </div>
 
-            {/* Dates */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {/* Dates, Passengers and Cabin Class in one row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
               <div className="space-y-2">
                 <Label htmlFor="departDate">Departure Date</Label>
                 <Input
@@ -246,10 +244,6 @@ export default function FlightSearchForm() {
                   />
                 </div>
               )}
-            </div>
-
-            {/* Passengers and Cabin Class */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="space-y-2">
                 <Label>Passengers</Label>
                 <div className="flex items-center space-x-2">
@@ -262,7 +256,7 @@ export default function FlightSearchForm() {
                       }))
                     }
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Adults" />
                     </SelectTrigger>
                     <SelectContent>
@@ -273,7 +267,7 @@ export default function FlightSearchForm() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Badge>{totalPassengers} Passenger{totalPassengers !== 1 ? "s" : ""}</Badge>
+                  {/* <Badge>{totalPassengers} Passenger{totalPassengers !== 1 ? "s" : ""}</Badge> */}
                 </div>
               </div>
               <div className="space-y-2">

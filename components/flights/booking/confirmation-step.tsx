@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { BookingData } from "./booking-form";
 import { format } from "date-fns";
+import { getBookingData } from "@/utils/localStorage";
 
 interface ConfirmationStepProps {
   bookingData: BookingData;
@@ -14,6 +15,10 @@ interface ConfirmationStepProps {
 
 export function ConfirmationStep({ bookingData }: ConfirmationStepProps) {
   const [isEmailSent, setIsEmailSent] = useState(false);
+  
+  // Get the stored booking data for the most up-to-date booking reference
+  const storedBookingData = getBookingData();
+  const bookingReference = storedBookingData.bookingReference || bookingData.bookingReference;
   
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -56,7 +61,7 @@ export function ConfirmationStep({ bookingData }: ConfirmationStepProps) {
             <p className="font-medium text-lg">Booking Reference</p>
             <div className="bg-secondary p-3 rounded-lg flex items-center justify-center">
               <span className="text-2xl font-mono font-bold tracking-wider" data-testid="booking-reference">
-                {bookingData.bookingReference || 'ABC123'}
+                {bookingReference || 'ABC123'}
               </span>
             </div>
           </Badge>
