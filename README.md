@@ -1,3 +1,4 @@
+```
 flight-booking-system/
 ├── .github/                         # GitHub workflows and templates
 │   ├── workflows/                   # CI/CD pipelines
@@ -118,7 +119,7 @@ flight-booking-system/
 
 A modern, feature-rich flight booking platform built with Next.js, React, and TypeScript, offering a seamless experience for travelers to search, book, and manage their flight reservations.
 
-![FlightsBooking Platform](https://placehold.co/600x400?text=FlightsBooking+Platform)
+![FlightsBooking Platform](/public/home.png)
 
 ## Features
 
@@ -128,9 +129,9 @@ A modern, feature-rich flight booking platform built with Next.js, React, and Ty
 - **Seat Selection**: Interactive seat map for choosing seats
 - **Payment Processing**: Secure payment integration with Stripe
 - **User Profiles**: Manage personal information and preferences
-- **Admin Dashboard**: Manage flights, bookings, and users (admin-only)
 - **Responsive Design**: Optimized for all devices from mobile to desktop
 - **Offline Capabilities**: Basic functionality even without internet connection
+- **Performance Optimizations**: Web Workers for non-blocking UI and IndexedDB for offline data persistence
 
 ## Technology Stack
 
@@ -142,6 +143,7 @@ A modern, feature-rich flight booking platform built with Next.js, React, and Ty
 - **Payment Processing**: Stripe
 - **Form Handling**: React Hook Form with Zod validation
 - **Testing**: Jest, React Testing Library, Cypress
+- **Performance**: Web Workers, IndexedDB, background data synchronization
 
 ## Architecture
 
@@ -159,6 +161,7 @@ The application follows Next.js App Router architecture with route groups:
 - **Hooks**: Custom React hooks for shared functionality
 - **Contexts**: Global state and shared data across components
 - **Components**: Reusable UI components
+- **Worker Services**: Background processing for intensive operations
 
 ### Data Flow
 
@@ -166,6 +169,34 @@ The application follows Next.js App Router architecture with route groups:
 2. **State Management**: Zustand stores handle local state
 3. **API Integration**: Services make requests to the backend
 4. **Data Rendering**: Components update based on API responses
+5. **Background Processing**: Web Workers handle CPU-intensive tasks
+
+## Performance Optimizations
+
+### Web Workers
+
+The application utilizes Web Workers to offload CPU-intensive tasks from the main thread:
+
+- **Flight Search Processing**: Filtering and sorting of flight results happens in a dedicated worker
+- **Non-Blocking UI**: Ensures the interface remains responsive during complex operations
+- **Parallel Processing**: Leverages multi-core capabilities for improved performance
+- **Graceful Degradation**: Falls back to main thread processing when Web Workers aren't supported
+
+### IndexedDB Integration
+
+For offline capabilities and performance improvements:
+
+- **Flight Search Caching**: Recent search results are stored locally
+- **Offline Access**: Previously viewed flights and bookings remain accessible offline
+- **Background Synchronization**: Updates local data when connectivity is restored
+- **Reduced API Calls**: Minimizes network requests by serving cached data when appropriate
+
+### Implementation Details
+
+- **Worker Architecture**: Dedicated worker files for specific tasks with clear messaging protocols
+- **Database Schema**: Structured IndexedDB stores with appropriate indexes for efficient queries
+- **Cache Invalidation**: Smart caching strategies to ensure data freshness
+- **Optimistic Updates**: UI updates immediately while persistence happens in the background
 
 ## User Flow
 
@@ -184,9 +215,6 @@ The application follows Next.js App Router architecture with route groups:
 - Built-in API routes for server-side operations
 - Simplified routing with file-based system
 
-**Tradeoffs**:
-- Learning curve for developers new to App Router
-- Some limitations with third-party libraries integration
 
 ### Component Library (shadcn/ui)
 
@@ -195,20 +223,12 @@ The application follows Next.js App Router architecture with route groups:
 - Customizable components that maintain accessibility
 - Reduced development time for common UI elements
 
-**Tradeoffs**:
-- Additional bundle size from component library
-- Some customization limitations
-
 ### State Management with Zustand
 
 **Benefits**:
 - Lightweight and performant compared to Redux
 - Simple API with minimal boilerplate
 - TypeScript support for type safety
-
-**Tradeoffs**:
-- Less ecosystem support compared to Redux
-- Limited middleware options
 
 ### Authentication with Supabase
 
@@ -238,7 +258,7 @@ git clone https://github.com/your-username/flightsbooking-frontend.git
 cd flightsbooking-frontend
 
 # Install dependencies
-npm install
+npm i --legacy-peer-deps
 
 # Set up environment variables
 cp .env.example .env.local
@@ -267,18 +287,6 @@ npm run build
 # Start production server
 npm start
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add some amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 
