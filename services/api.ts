@@ -165,7 +165,7 @@ export const bookingApi = {
     bookingData: BookingData
   ): Promise<ApiResponse<{ id: string }>> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/bookings`, {
+      const response = await fetch(`${API_V1_URL}/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bookingData),
@@ -181,7 +181,7 @@ export const bookingApi = {
 
   getBooking: async (bookingId: string): Promise<ApiResponse> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/bookings/${bookingId}`);
+      const response = await fetch(`${API_V1_URL}/bookings/${bookingId}`);
       return await response.json();
     } catch (error: unknown) {
       const errorMessage =
@@ -233,7 +233,7 @@ export const bookingApi = {
         "Content-Type": "application/json",
       };
 
-      const response = await fetch(`${API_BASE_URL}/bookings`, {
+      const response = await fetch(`${API_V1_URL}/bookings`, {
         method: "GET",
         headers,
       });

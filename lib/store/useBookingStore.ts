@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { ApiBooking, bookingApi } from '@/services/api';
+import { flightsApi } from '@/services/api';
 
 // Define booking types
 export interface Booking {
@@ -108,8 +109,25 @@ const fetchBookingsFromAPI = async (): Promise<Booking[]> => {
     }
     
     // Map API booking format to our frontend Booking type
-    return response.data.map((apiBooking: ApiBooking) => {
+    const bookingsPromises = response.data.map(async (apiBooking: ApiBooking) => {
       console.log("Processing booking:", apiBooking);
+      
+      // Attempt to fetch flight details
+      let departureAirport = 'LHR';
+      let arrivalAirport = 'JFK';
+      
+      try {
+        const flightResponse = await flightsApi.getFlightDetails(apiBooking.flightId);
+        if (flightResponse.success && flightResponse.data) {
+          departureAirport = flightResponse.data.origin.code;
+          arrivalAirport = flightResponse.data.destination.code;
+        }
+      } catch (error) {
+        console.error(`Error fetching flight details for ${apiBooking.flightId}:`, error);
+        // Fallback to the hardcoded values based on ID
+        departureAirport = apiBooking.id.includes('e5b4510c') ? 'LAX' : 'LHR';
+        arrivalAirport = apiBooking.id.includes('e5b4510c') ? 'SFO' : 'JFK';
+      }
       
       // Convert API booking to our frontend booking format
       return {
@@ -133,13 +151,13 @@ const fetchBookingsFromAPI = async (): Promise<Booking[]> => {
           };
         }),
         totalPrice: apiBooking.totalAmount,
-        paymentStatus: apiBooking.confirmedAt ? 'paid' : 'pending',
+        paymentStatus: apiBooking.confirmedAt ? 'paid' : 'pending' as 'paid' | 'pending' | 'refunded',
         checkedIn: false, // Assuming no check-in info in API
         seatSelections: apiBooking.bookedSeats.map((seat, index) => ({
           passengerId: `passenger-${index % apiBooking.passengerDetails.length}`,
           seatNumber: seat,
           cabin: mapCabinType(apiBooking.selectedCabin),
-          legType: 'outbound',
+          legType: 'outbound' as 'outbound' | 'return',
         })),
         addOns: [], // No add-ons in API
         contactInfo: {
@@ -150,8 +168,8 @@ const fetchBookingsFromAPI = async (): Promise<Booking[]> => {
           // This would need to be fetched from a flights API in a real implementation
           flightNumber: `FL-${apiBooking.bookingReference}`,
           airline: 'FlightsBooking Airlines',
-          departureAirport: apiBooking.id.includes('e5b4510c') ? 'LAX' : 'LHR',
-          arrivalAirport: apiBooking.id.includes('e5b4510c') ? 'SFO' : 'JFK',
+          departureAirport,
+          arrivalAirport,
           departureTime: new Date().toISOString(),
           arrivalTime: new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString(),
           duration: '8h 0m',
@@ -159,6 +177,8 @@ const fetchBookingsFromAPI = async (): Promise<Booking[]> => {
         },
       };
     });
+    
+    return Promise.all(bookingsPromises);
   } catch (error) {
     console.error('Error fetching bookings:', error);
     return [];
