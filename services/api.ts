@@ -1,6 +1,7 @@
 // services/api.ts
 
-const API_BASE_URL = "http://localhost:4000/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_V1_URL = `${API_BASE_URL}/v1`;
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -265,50 +266,91 @@ export interface PaymentIntentData {
   };
 }
 
-// Payment endpoints
-export const paymentApi = {
-  createPaymentIntent: async (
-    paymentData: PaymentIntentData
-  ): Promise<ApiResponse<{ clientSecret: string }>> => {
+// Seats endpoints
+export const seatsApi = {
+  getSeatMap: async (flightId: string): Promise<ApiResponse<SeatMapResponse>> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/payments/create-intent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(paymentData),
-      });
-
-      return await response.json();
+      const response = await fetch(`${API_V1_URL}/seats/map/${flightId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch seat map: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return { success: true, data };
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to create payment intent";
-      return { success: false, error: errorMessage };
-    }
-  },
-
-  confirmPayment: async (
-    paymentId: string,
-    confirmationData: Record<string, unknown>
-  ): Promise<ApiResponse> => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/payments/${paymentId}/confirm`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(confirmationData),
-        }
-      );
-
-      return await response.json();
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to confirm payment";
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Failed to fetch seat map";
       return { success: false, error: errorMessage };
     }
   },
 };
+
+// Payments endpoints
+export const paymentsApi = {
+  createPaymentIntent: async (paymentData: PaymentIntentData): Promise<ApiResponse> => {
+    try {
+      let token = "";
+      const authData = localStorage.getItem("sb-auth-token");
+      if (authData) {
+        try {
+          const parsedAuthData = JSON.parse(authData);
+          token = parsedAuthData.access_token;
+        } catch (e) {
+          console.error("Error parsing auth token:", e);
+        }
+      }
+
+      const response = await fetch(`${API_V1_URL}/payments/create-intent`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(paymentData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create payment intent: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Failed to create payment intent";
+      return { success: false, error: errorMessage };
+    }
+  },
+};
+
+// Add SeatMapResponse interface
+export interface SeatMap {
+  cabin: string;
+  rows: number;
+  columns: string[];
+  seats: Array<{
+    id: string;
+    flightId: string;
+    seatNumber: string;
+    cabin: string;
+    position: {
+      row: number;
+      col: string;
+    };
+    isBlocked: boolean;
+    isBooked: boolean;
+    isLocked: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+}
+
+export interface SeatMapResponse {
+  flightId: string;
+  seatMaps: SeatMap[];
+}
 
 // Admin API endpoints
 export const adminApi = {
@@ -615,3 +657,65 @@ export const adminApi = {
     }
   },
 };
+
+// Flights endpoints
+export const flightsApi = {
+  getFlightDetails: async (flightId: string): Promise<ApiResponse<FlightDetails>> => {
+    try {
+      let token = "";
+      const authData = localStorage.getItem("sb-auth-token");
+      if (authData) {
+        try {
+          const parsedAuthData = JSON.parse(authData);
+          token = parsedAuthData.access_token;
+        } catch (e) {
+          console.error("Error parsing auth token:", e);
+        }
+      }
+
+      const response = await fetch(`${API_V1_URL}/flights/${flightId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message || 
+          `Failed to fetch flight details: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Failed to fetch flight details";
+      return { success: false, error: errorMessage };
+    }
+  },
+};
+
+// Interface for flight details
+export interface Airport {
+  code: string;
+  city: string;
+  name: string;
+}
+
+export interface FlightDetails {
+  id: string;
+  airline: string;
+  flightNumber: string;
+  origin: Airport;
+  destination: Airport;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string;
+  aircraft: string;
+  basePrice: number;
+  cabinClass: string;
+}

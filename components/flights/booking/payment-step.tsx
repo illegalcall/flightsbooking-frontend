@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { saveBookingData, getBookingData } from "@/utils/localStorage";
 import { toast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
+import { paymentsApi } from "@/services/api";
 
 interface Address {
   street: string;
@@ -213,7 +214,7 @@ function PaymentForm({ bookingData, onComplete, onBack }: PaymentStepProps) {
         console.log('Creating booking with token:', token ? 'Token exists' : 'No token');
         
         // 1. First create the booking
-        const bookingResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/v1/bookings`, {
+        const bookingResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/bookings`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -256,28 +257,26 @@ function PaymentForm({ bookingData, onComplete, onBack }: PaymentStepProps) {
         }
         
         // 2. Then create payment intent with the booking ID
-        const response = await fetch('http://localhost:4000/v1/payments/create-intent', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            bookingId: bookingResponseData.id,
-            currency: 'usd',
-            expectedAmount: totalAmount
-          }),
+        const response = await paymentsApi.createPaymentIntent({
+          bookingId: bookingResponseData.id,
+          amount: totalAmount * 100, // Convert to cents
+          currency: 'usd',
+          customer: {
+            email: bookingData.contactInfo?.email || '',
+            name: passengerDetails[0]?.fullName || 'Customer'
+          }
         });
         
-        if (!response.ok) {
-          throw new Error(`Payment setup failed: ${response.status}`);
+        if (!response.success) {
+          throw new Error(`Payment intent creation failed: ${response.error}`);
         }
         
-        const data = await response.json();
+        // Type assertion to help TypeScript understand the structure
+        const paymentIntentData = response.data as { clientSecret: string };
         
         // Set the client secret from the API response
-        if (data && data.clientSecret) {
-          setClientSecret(data.clientSecret);
+        if (paymentIntentData && paymentIntentData.clientSecret) {
+          setClientSecret(paymentIntentData.clientSecret);
         } else {
           throw new Error('Invalid response from payment intent API');
         }

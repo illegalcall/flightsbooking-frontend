@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { supabase } from "@/lib/supabase/client";
-import { saveBookingData } from "@/utils/localStorage";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { saveBookingData } from "@/utils/localStorage";
+import { flightsApi } from "@/services/api";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+
 
 // Types
 interface FlightDetailsStepProps {
@@ -175,45 +176,15 @@ export function FlightDetailsStep({ flightId, onComplete }: FlightDetailsStepPro
         setIsLoading(true);
         setError(null);
         
-        // Get auth token
-        const { data: { session } } = await supabase.auth.getSession();
-        let token = session?.access_token || '';
+        const response = await flightsApi.getFlightDetails(flightId);
         
-        // Fallback to localStorage if needed
-        if (!token) {
-          const authData = localStorage.getItem('sb-auth-token');
-          if (authData) {
-            try {
-              const parsedAuthData = JSON.parse(authData);
-              token = parsedAuthData.access_token;
-            } catch {
-              throw new Error("Authentication error: Invalid token format");
-            }
-          } else {
-            throw new Error("Authentication error: No token found");
-          }
+        if (!response.success || !response.data) {
+          throw new Error(response.error || "Failed to fetch flight details");
         }
         
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/v1/flights/${flightId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => null);
-          throw new Error(
-            errorData?.message || 
-            `Failed to fetch flight details: ${response.status} ${response.statusText}`
-          );
-        }
-        
-        const data = await response.json();
-        setFlightDetails(data);
-        
-        // Save flight details to localStorage
-        saveBookingData({ flightDetails: data });
+        setFlightDetails(response.data);
+        // Save to localStorage for persistence
+        saveBookingData({ flightDetails: response.data });
       } catch (error) {
         console.error("Error fetching flight details:", error);
         setError(error instanceof Error ? error.message : "An unknown error occurred");

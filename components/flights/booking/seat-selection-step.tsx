@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { saveBookingData } from "@/utils/localStorage";
+import { seatsApi, SeatMapResponse } from "@/services/api";
 
 // Define pricing for each cabin class
 const cabinPricing = {
@@ -14,47 +15,17 @@ const cabinPricing = {
   "First": 250,
 };
 
-// Define types for API response
-interface SeatPosition {
-  row: number;
-  col: string;
-}
-
-interface SeatData {
-  id: string;
-  flightId: string;
-  seatNumber: string;
-  cabin: string;
-  position: SeatPosition;
-  isBlocked: boolean;
-  isBooked: boolean;
-  isLocked: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface SeatMap {
-  cabin: string;
-  rows: number;
-  columns: string[];
-  seats: SeatData[];
-}
-
-interface SeatMapResponse {
-  flightId: string;
-  seatMaps: SeatMap[];
-}
 
 // Fetch seat map from API
 const fetchSeatMap = async (flightId: string): Promise<SeatMapResponse> => {
   try {
-    const response = await fetch(`http://localhost:4000/v1/seats/map/${flightId}`);
+    const response = await seatsApi.getSeatMap(flightId);
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch seat map: ${response.status}`);
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to fetch seat map");
     }
     
-    return await response.json();
+    return response.data;
   } catch (error) {
     console.error("Error fetching seat map:", error);
     throw error;
