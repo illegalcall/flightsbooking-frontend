@@ -124,7 +124,6 @@ export function PaymentStep({ bookingData, onComplete, onBack }: PaymentStepProp
 }
 
 function PaymentForm({ bookingData, onComplete, onBack }: PaymentStepProps) {
-  console.log("🚀 ~ PaymentForm ~ bookingData:", bookingData)
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -233,13 +232,11 @@ function PaymentForm({ bookingData, onComplete, onBack }: PaymentStepProps) {
         // Make sure your NestJS backend is configured to handle raw bodies for Stripe webhooks.
         // See: https://stripe.com/docs/webhooks/signatures for details on webhook signature verification
         
-        console.log("🚀 ~ createBookingAndPaymentIntent ~ bookingResponse:", bookingResponse)
         if (!bookingResponse.ok) {
           throw new Error(`Booking creation failed: ${bookingResponse.status}`);
         }
         
         const bookingResponseData = await bookingResponse.json();
-        console.log("🚀 ~ createBookingAndPaymentIntent ~ bookingResponseData:", bookingResponseData)
         
         // Save booking ID and reference to localStorage
         if (bookingResponseData && bookingResponseData.id) {
@@ -271,12 +268,10 @@ function PaymentForm({ bookingData, onComplete, onBack }: PaymentStepProps) {
           throw new Error(`Payment intent creation failed: ${response.error}`);
         }
         
-        // Type assertion to help TypeScript understand the structure
-        const paymentIntentData = response.data as { clientSecret: string };
         
         // Set the client secret from the API response
-        if (paymentIntentData && paymentIntentData.clientSecret) {
-          setClientSecret(paymentIntentData.clientSecret);
+        if (response && (response as unknown as { clientSecret: string }).clientSecret) {
+          setClientSecret((response as unknown as { clientSecret: string }).clientSecret);
         } else {
           throw new Error('Invalid response from payment intent API');
         }
@@ -368,6 +363,7 @@ function PaymentForm({ bookingData, onComplete, onBack }: PaymentStepProps) {
     }
   };
   
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">Payment</h2>
