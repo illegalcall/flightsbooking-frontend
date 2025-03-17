@@ -21,11 +21,11 @@ export function Navbar() {
   const handleSignOut = async () => {
     try {
       const success = await signOut();
-      
+
       if (success) {
         // Force a refresh of the auth state
         await refreshUser();
-        
+
         // Navigate to login page
         router.push("/");
       }
@@ -48,14 +48,23 @@ export function Navbar() {
             FlightsBooking
           </Link>
           <nav className="hidden md:flex gap-6">
-            <Link href="/" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link
+              href="/"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
               Home
             </Link>
-            <Link href="/flights" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link
+              href="/search"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
               Flights
             </Link>
-            <Link href="/deals" className="text-sm font-medium transition-colors hover:text-primary">
-              Deals
+            <Link
+              href="/bookings"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              My Bookings
             </Link>
           </nav>
         </div>
@@ -64,7 +73,10 @@ export function Navbar() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 rounded-full"
+                >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="" alt={user.email || ""} />
                     <AvatarFallback>{getUserInitials()}</AvatarFallback>
@@ -89,7 +101,10 @@ export function Navbar() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  className="cursor-pointer"
+                >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
@@ -109,4 +124,4 @@ export function Navbar() {
       </div>
     </header>
   );
-} 
+}

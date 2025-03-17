@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -25,34 +32,20 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Reset error state
     setError(null);
-    
-    // Validate form
+
     if (!email || !password) {
-      setError("Email and password are required");
+      setError("Email and password are required.");
       return;
     }
 
+    setIsLoading(true);
     try {
-      // Set loading state
-      setIsLoading(true);
-      
-      // Perform Supabase authentication
       await signIn(email, password);
-      
-      // Refresh the user context to update the UI
       await refreshUser();
-      
-      // Redirect to the dashboard after successful login
       router.push("/");
-      
     } catch (err) {
-      // Handle authentication errors
-      const authError = err as AuthError;
-      setError(authError.message || "Invalid email or password. Please try again.");
-      console.error(err);
+      setError((err as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -75,7 +68,7 @@ export default function LoginPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -83,16 +76,21 @@ export default function LoginPage() {
                 type="email"
                 placeholder="name@example.com"
                 value={email}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setEmail(e.target.value)
+                }
                 required
                 autoComplete="email"
               />
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link href="/reset-password" className="text-sm text-primary hover:underline">
+                <Link
+                  href="/reset-password"
+                  className="text-sm text-primary hover:underline"
+                >
                   Forgot password?
                 </Link>
               </div>
@@ -100,26 +98,26 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setPassword(e.target.value)
+                }
                 required
                 autoComplete="current-password"
               />
             </div>
-            
+
             <div className="flex items-center space-x-2">
-              <Switch 
-                id="remember-me" 
+              <Switch
+                id="remember-me"
                 checked={rememberMe}
                 onCheckedChange={setRememberMe}
               />
-              <Label htmlFor="remember-me" className="text-sm">Remember me</Label>
+              <Label htmlFor="remember-me" className="text-sm">
+                Remember me
+              </Label>
             </div>
-            
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
@@ -135,4 +133,4 @@ export default function LoginPage() {
       </Card>
     </div>
   );
-} 
+}

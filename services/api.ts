@@ -1,7 +1,22 @@
 // services/api.ts
 
+import { supabase } from "@/lib/supabase/client";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const API_V1_URL = `${API_BASE_URL}/v1`;
+
+export async function getAuthHeaders() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const token = session?.access_token || "";
+
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+}
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -142,9 +157,11 @@ export const passengerApi = {
     passengerData: PassengerData
   ): Promise<ApiResponse> => {
     try {
+      const headers = await getAuthHeaders();
+
       const response = await fetch(`${API_BASE_URL}/passengers/validate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(passengerData),
       });
 
@@ -158,16 +175,20 @@ export const passengerApi = {
     }
   },
 };
-
 // Booking endpoints
 export const bookingApi = {
   createBooking: async (
     bookingData: BookingData
   ): Promise<ApiResponse<{ id: string }>> => {
     try {
+      console.log("trying to create booking");
+
+      const headers = await getAuthHeaders();
+      console.log("headers::::", headers);
+
       const response = await fetch(`${API_V1_URL}/bookings`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(bookingData),
       });
 
@@ -181,7 +202,11 @@ export const bookingApi = {
 
   getBooking: async (bookingId: string): Promise<ApiResponse> => {
     try {
-      const response = await fetch(`${API_V1_URL}/bookings/${bookingId}`);
+      const headers = await getAuthHeaders();
+
+      const response = await fetch(`${API_V1_URL}/bookings/${bookingId}`, {
+        headers,
+      });
       return await response.json();
     } catch (error: unknown) {
       const errorMessage =
@@ -197,11 +222,13 @@ export const bookingApi = {
     paymentData: { paymentId: string; status: string }
   ): Promise<ApiResponse> => {
     try {
+      const headers = await getAuthHeaders();
+
       const response = await fetch(
-        `${API_BASE_URL}/bookings/${bookingId}/confirm`,
+        `${API_V1_URL}/bookings/${bookingId}/confirm`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify(paymentData),
         }
       );
@@ -216,22 +243,7 @@ export const bookingApi = {
 
   getUserBookings: async (): Promise<ApiResponse<ApiBooking[]>> => {
     try {
-      // Use the token from the curl example for testing
-      let token = "";
-      const authData = localStorage.getItem("sb-auth-token");
-      if (authData) {
-        try {
-          const parsedAuthData = JSON.parse(authData);
-          token = parsedAuthData.access_token;
-        } catch (e) {
-          console.error("Error parsing auth token:", e);
-        }
-      }
-
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      };
+      const headers = await getAuthHeaders();
 
       const response = await fetch(`${API_V1_URL}/bookings`, {
         method: "GET",
@@ -268,20 +280,21 @@ export interface PaymentIntentData {
 
 // Seats endpoints
 export const seatsApi = {
-  getSeatMap: async (flightId: string): Promise<ApiResponse<SeatMapResponse>> => {
+  getSeatMap: async (
+    flightId: string
+  ): Promise<ApiResponse<SeatMapResponse>> => {
     try {
       const response = await fetch(`${API_V1_URL}/seats/map/${flightId}`);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch seat map: ${response.status}`);
       }
-      
+
       const data = await response.json();
       return { success: true, data };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : "Failed to fetch seat map";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch seat map";
       return { success: false, error: errorMessage };
     }
   },
@@ -289,25 +302,15 @@ export const seatsApi = {
 
 // Payments endpoints
 export const paymentsApi = {
-  createPaymentIntent: async (paymentData: PaymentIntentData): Promise<ApiResponse> => {
+  createPaymentIntent: async (
+    paymentData: PaymentIntentData
+  ): Promise<ApiResponse> => {
     try {
-      let token = "";
-      const authData = localStorage.getItem("sb-auth-token");
-      if (authData) {
-        try {
-          const parsedAuthData = JSON.parse(authData);
-          token = parsedAuthData.access_token;
-        } catch (e) {
-          console.error("Error parsing auth token:", e);
-        }
-      }
+      const headers = await getAuthHeaders();
 
       const response = await fetch(`${API_V1_URL}/payments/create-intent`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        method: "POST",
+        headers,
         body: JSON.stringify(paymentData),
       });
 
@@ -317,9 +320,10 @@ export const paymentsApi = {
 
       return await response.json();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : "Failed to create payment intent";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to create payment intent";
       return { success: false, error: errorMessage };
     }
   },
@@ -354,29 +358,11 @@ export interface SeatMapResponse {
 
 // Admin API endpoints
 export const adminApi = {
-  // Helper function to get authenticated headers
-  getAuthHeaders: () => {
-    let token = "";
-    try {
-      const authData = localStorage.getItem("sb-auth-token");
-      if (authData) {
-        const parsedAuthData = JSON.parse(authData);
-        token = parsedAuthData.access_token;
-      }
-    } catch (e) {
-      console.error("Error parsing auth token:", e);
-    }
-
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-  },
-
   // User Management
   listUsers: async (filters: UserFilterDto = {}): Promise<ApiResponse> => {
     try {
       // Convert filters to query params
+      const headers = await getAuthHeaders();
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined) {
@@ -388,7 +374,7 @@ export const adminApi = {
         `${API_BASE_URL}/admin/users?${params.toString()}`,
         {
           method: "GET",
-          headers: adminApi.getAuthHeaders(),
+          headers,
         }
       );
 
@@ -406,9 +392,10 @@ export const adminApi = {
 
   getUserDetails: async (userId: string): Promise<ApiResponse> => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
         method: "GET",
-        headers: adminApi.getAuthHeaders(),
+        headers,
       });
 
       if (!response.ok) {
@@ -428,11 +415,12 @@ export const adminApi = {
     roleData: UpdateUserRoleDto
   ): Promise<ApiResponse> => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(
         `${API_BASE_URL}/admin/users/${userId}/role`,
         {
           method: "PUT",
-          headers: adminApi.getAuthHeaders(),
+          headers,
           body: JSON.stringify(roleData),
         }
       );
@@ -451,11 +439,12 @@ export const adminApi = {
 
   disableUser: async (userId: string): Promise<ApiResponse> => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(
         `${API_BASE_URL}/admin/users/${userId}/disable`,
         {
           method: "POST",
-          headers: adminApi.getAuthHeaders(),
+          headers,
         }
       );
 
@@ -476,6 +465,7 @@ export const adminApi = {
     filters: BookingFilterDto = {}
   ): Promise<ApiResponse> => {
     try {
+      const headers = await getAuthHeaders();
       // Convert filters to query params
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
@@ -488,7 +478,7 @@ export const adminApi = {
         `${API_BASE_URL}/admin/bookings?${params.toString()}`,
         {
           method: "GET",
-          headers: adminApi.getAuthHeaders(),
+          headers,
         }
       );
 
@@ -506,11 +496,12 @@ export const adminApi = {
 
   getBookingDetails: async (bookingId: string): Promise<ApiResponse> => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(
         `${API_BASE_URL}/admin/bookings/${bookingId}`,
         {
           method: "GET",
-          headers: adminApi.getAuthHeaders(),
+          headers,
         }
       );
 
@@ -533,11 +524,12 @@ export const adminApi = {
     statusData: UpdateBookingStatusDto
   ): Promise<ApiResponse> => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(
         `${API_BASE_URL}/admin/bookings/${bookingId}/status`,
         {
           method: "PUT",
-          headers: adminApi.getAuthHeaders(),
+          headers,
           body: JSON.stringify(statusData),
         }
       );
@@ -559,6 +551,7 @@ export const adminApi = {
   // Flight Management
   listFlights: async (filters: FlightFilterDto = {}): Promise<ApiResponse> => {
     try {
+      const headers = await getAuthHeaders();
       // Convert filters to query params
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
@@ -571,7 +564,7 @@ export const adminApi = {
         `${API_BASE_URL}/admin/flights?${params.toString()}`,
         {
           method: "GET",
-          headers: adminApi.getAuthHeaders(),
+          headers,
         }
       );
 
@@ -589,9 +582,10 @@ export const adminApi = {
 
   createFlight: async (flightData: CreateFlightDto): Promise<ApiResponse> => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}/admin/flights`, {
         method: "POST",
-        headers: adminApi.getAuthHeaders(),
+        headers,
         body: JSON.stringify(flightData),
       });
 
@@ -609,11 +603,12 @@ export const adminApi = {
 
   getFlightDetails: async (flightId: string): Promise<ApiResponse> => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(
         `${API_BASE_URL}/admin/flights/${flightId}`,
         {
           method: "GET",
-          headers: adminApi.getAuthHeaders(),
+          headers,
         }
       );
 
@@ -636,11 +631,12 @@ export const adminApi = {
     flightData: UpdateFlightDto
   ): Promise<ApiResponse> => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(
         `${API_BASE_URL}/admin/flights/${flightId}`,
         {
           method: "PUT",
-          headers: adminApi.getAuthHeaders(),
+          headers,
           body: JSON.stringify(flightData),
         }
       );
@@ -660,40 +656,31 @@ export const adminApi = {
 
 // Flights endpoints
 export const flightsApi = {
-  getFlightDetails: async (flightId: string): Promise<ApiResponse<FlightDetails>> => {
+  getFlightDetails: async (
+    flightId: string
+  ): Promise<ApiResponse<FlightDetails>> => {
     try {
-      let token = "";
-      const authData = localStorage.getItem("sb-auth-token");
-      if (authData) {
-        try {
-          const parsedAuthData = JSON.parse(authData);
-          token = parsedAuthData.access_token;
-        } catch (e) {
-          console.error("Error parsing auth token:", e);
-        }
-      }
+      const headers = await getAuthHeaders();
 
       const response = await fetch(`${API_V1_URL}/flights/${flightId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+        headers,
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         throw new Error(
-          errorData?.message || 
-          `Failed to fetch flight details: ${response.status} ${response.statusText}`
+          errorData?.message ||
+            `Failed to fetch flight details: ${response.status} ${response.statusText}`
         );
       }
 
       const data = await response.json();
       return { success: true, data };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : "Failed to fetch flight details";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch flight details";
       return { success: false, error: errorMessage };
     }
   },

@@ -51,43 +51,44 @@ const MOCK_ADDONS: AddonOption[] = [
       { id: "gluten-free", name: "Gluten Free", price: 5 },
       { id: "kosher", name: "Kosher", price: 10 },
       { id: "halal", name: "Halal", price: 10 },
-    ]
+    ],
   },
   {
     id: "baggage",
     name: "Extra Baggage",
     description: "Add an extra checked bag (23kg)",
     price: 60,
-    type: "checkbox"
+    type: "checkbox",
   },
   {
     id: "priority",
     name: "Priority Boarding",
     description: "Be among the first to board the plane",
     price: 25,
-    type: "checkbox"
+    type: "checkbox",
   },
   {
     id: "lounge",
     name: "Lounge Access",
-    description: "Enjoy comfortable seating, complimentary snacks, and Wi-Fi before your flight",
+    description:
+      "Enjoy comfortable seating, complimentary snacks, and Wi-Fi before your flight",
     price: 45,
-    type: "checkbox"
+    type: "checkbox",
   },
   {
     id: "wifi",
     name: "In-flight Wi-Fi",
     description: "Stay connected throughout your journey",
     price: 15,
-    type: "checkbox"
+    type: "checkbox",
   },
   {
     id: "insurance",
     name: "Travel Insurance",
     description: "Comprehensive coverage for your trip",
     price: 35,
-    type: "checkbox"
-  }
+    type: "checkbox",
+  },
 ];
 
 export function AddonsStep({ onComplete, onBack }: AddonsStepProps) {
@@ -101,20 +102,22 @@ export function AddonsStep({ onComplete, onBack }: AddonsStepProps) {
   ]);
 
   const handleCheckboxChange = (addonId: string) => {
-    setSelectedAddons(prev => 
-      prev.map(addon => 
-        addon.id === addonId 
-          ? { ...addon, selected: !addon.selected } 
-          : addon
+    setSelectedAddons((prev) =>
+      prev.map((addon) =>
+        addon.id === addonId ? { ...addon, selected: !addon.selected } : addon
       )
     );
   };
 
-  const handleRadioChange = (addonId: string, optionId: string, price: number) => {
-    setSelectedAddons(prev => 
-      prev.map(addon => 
-        addon.id === addonId 
-          ? { ...addon, selected: true, optionId, price } 
+  const handleRadioChange = (
+    addonId: string,
+    optionId: string,
+    price: number
+  ) => {
+    setSelectedAddons((prev) =>
+      prev.map((addon) =>
+        addon.id === addonId
+          ? { ...addon, selected: true, optionId, price }
           : addon
       )
     );
@@ -122,26 +125,26 @@ export function AddonsStep({ onComplete, onBack }: AddonsStepProps) {
 
   const getTotalPrice = () => {
     return selectedAddons
-      .filter(addon => addon.selected)
+      .filter((addon) => addon.selected)
       .reduce((total, addon) => total + addon.price, 0);
   };
 
   const handleContinue = () => {
     // Filter only the selected addons
-    const selectedAddonsList = selectedAddons.filter(addon => addon.selected);
-    
+    const selectedAddonsList = selectedAddons.filter((addon) => addon.selected);
+
     // Map to the format expected by the API
-    const formattedAddons = selectedAddonsList.map(addon => ({
+    const formattedAddons = selectedAddonsList.map((addon) => ({
       id: addon.id,
       selected: addon.selected,
       optionId: addon.optionId,
       price: addon.price,
-      quantity: 1 // Default to 1 for now
+      quantity: 1, // Default to 1 for now
     }));
-    
+
     // Save to localStorage
     saveBookingData({ addons: formattedAddons });
-    
+
     // Continue to next step
     onComplete({ addons: formattedAddons });
   };
@@ -158,15 +161,21 @@ export function AddonsStep({ onComplete, onBack }: AddonsStepProps) {
           <Card key={addon.id}>
             <CardContent className="p-6">
               {addon.type === "checkbox" ? (
-                <div className="flex items-start space-x-3">
-                  <Checkbox 
+                <div
+                  className="flex items-start space-x-3"
+                  onClick={() => handleCheckboxChange(addon.id)}
+                >
+                  <Checkbox
                     id={addon.id}
-                    checked={selectedAddons.find(a => a.id === addon.id)?.selected || false}
-                    onCheckedChange={() => handleCheckboxChange(addon.id)}
+                    checked={
+                      selectedAddons.find((a) => a.id === addon.id)?.selected ||
+                      false
+                    }
+                    // onCheckedChange={() => handleCheckboxChange(addon.id)}
                   />
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <Label 
+                      <Label
                         htmlFor={addon.id}
                         className="font-medium cursor-pointer"
                       >
@@ -174,18 +183,24 @@ export function AddonsStep({ onComplete, onBack }: AddonsStepProps) {
                       </Label>
                       <span className="font-medium">${addon.price}</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">{addon.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {addon.description}
+                    </p>
                   </div>
                 </div>
               ) : addon.type === "radio" && addon.options ? (
                 <div className="space-y-3">
                   <h3 className="font-medium">{addon.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">{addon.description}</p>
-                  
-                  <RadioGroup 
-                    value={selectedAddons.find(a => a.id === addon.id)?.optionId}
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {addon.description}
+                  </p>
+
+                  <RadioGroup
+                    value={
+                      selectedAddons.find((a) => a.id === addon.id)?.optionId
+                    }
                     onValueChange={(value) => {
-                      const option = addon.options?.find(o => o.id === value);
+                      const option = addon.options?.find((o) => o.id === value);
                       if (option) {
                         handleRadioChange(addon.id, value, option.price);
                       }
@@ -193,16 +208,23 @@ export function AddonsStep({ onComplete, onBack }: AddonsStepProps) {
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {addon.options.map((option) => (
-                        <div 
-                          key={option.id} 
+                        <div
+                          key={option.id}
                           className="flex items-center justify-between space-x-2 border rounded-md p-3"
                         >
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value={option.id} id={`${addon.id}-${option.id}`} />
-                            <Label htmlFor={`${addon.id}-${option.id}`}>{option.name}</Label>
+                            <RadioGroupItem
+                              value={option.id}
+                              id={`${addon.id}-${option.id}`}
+                            />
+                            <Label htmlFor={`${addon.id}-${option.id}`}>
+                              {option.name}
+                            </Label>
                           </div>
                           <span className="text-sm font-medium">
-                            {option.price > 0 ? `+$${option.price}` : "Included"}
+                            {option.price > 0
+                              ? `+$${option.price}`
+                              : "Included"}
                           </span>
                         </div>
                       ))}
@@ -232,4 +254,4 @@ export function AddonsStep({ onComplete, onBack }: AddonsStepProps) {
       </div>
     </div>
   );
-} 
+}

@@ -25,77 +25,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Initial check for user and session
-    const initializeAuth = async () => {
-      try {
-        setIsLoading(true);
-
-        // Fetch fresh data from Supabase
-        const [currentUser, currentSession] = await Promise.all([
-          getCurrentUser(),
-          getCurrentSession(),
-        ]);
-
-        setUser(currentUser);
-        setSession(currentSession);
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-      } finally {
-        setIsLoading(false);
-      }
+    const initializeSession = async () => {
+      setIsLoading(true);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
     };
 
-    initializeAuth();
+    initializeSession();
 
-    // Listen for auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        console.log("Auth state changed:", event);
-
-        if (event === "SIGNED_OUT") {
-          // Clear state immediately on sign out
-          setUser(null);
-          setSession(null);
-        } else {
-          setSession(newSession);
-
-          // Update user info when auth state changes
-          const currentUser = await getCurrentUser();
-          setUser(currentUser);
-        }
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
+      console.log("Supabase auth event:", event);
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+    });
 
     return () => {
-      authListener?.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
   const refreshUser = async () => {
-    try {
-      const [currentUser, currentSession] = await Promise.all([
-        getCurrentUser(),
-        getCurrentSession(),
-      ]);
-
-      setUser(currentUser);
-      setSession(currentSession);
-    } catch (error) {
-      console.error("Error refreshing user:", error);
-    }
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    setSession(session);
+    setUser(session?.user ?? null);
   };
 
   const handleSignOut = async () => {
     try {
       await signOut();
-
-      // Clear state immediately
       setUser(null);
       setSession(null);
-
-      // Force refresh from server
-      await refreshUser();
-
       return true;
     } catch (error) {
       console.error("Error signing out:", error);
@@ -103,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     isLoading,
@@ -114,10 +81,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
+};
