@@ -15,7 +15,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,18 +52,14 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import {
-  AlertCircle,
   Edit,
   Eye,
   MoreHorizontal,
-  Plane,
-  PlaneTakeoff,
   Plus,
   Search,
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 interface Flight {
   id: string;
@@ -91,7 +86,7 @@ export default function FlightsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [airlineFilter, setAirlineFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(5);
+  const totalPages = 5;
 
   useEffect(() => {
     // In a real app, you would fetch this data from the API

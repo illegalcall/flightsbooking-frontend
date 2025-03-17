@@ -21,49 +21,57 @@ export default function ProtectedRoute({
   const router = useRouter();
   const pathname = usePathname();
   const { isLoading, isAuthenticated, user, refreshAuth } = useAuthStore();
-  const [hasTimedOut, setHasTimedOut] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(true);
+  const [refreshFailed, setRefreshFailed] = useState(false);
 
   useEffect(() => {
     // Check auth status on mount
     console.log("ProtectedRoute: Refreshing auth");
-
-    const timeoutId = setTimeout(() => {
-      if (isLoading) {
-        console.log("ProtectedRoute: Auth refresh timed out");
-        setHasTimedOut(true);
-      }
-    }, 5000); // 5-second timeout
-
+    
+    let isMounted = true;
+    setIsRefreshing(true);
+    
     refreshAuth()
       .then(() => {
-        console.log("ProtectedRoute: Auth refreshed successfully");
-        clearTimeout(timeoutId);
+        if (isMounted) {
+          console.log("ProtectedRoute: Auth refreshed successfully");
+          setIsRefreshing(false);
+        }
       })
       .catch((error) => {
-        console.error("ProtectedRoute: Auth refresh failed", error);
-        clearTimeout(timeoutId);
-        setHasTimedOut(true);
+        if (isMounted) {
+          console.error("ProtectedRoute: Auth refresh failed", error);
+          setIsRefreshing(false);
+          setRefreshFailed(true);
+        }
       });
 
-    return () => clearTimeout(timeoutId);
-  }, []);
+    return () => {
+      isMounted = false;
+    };
+  }, [refreshAuth]);
 
   useEffect(() => {
-    console.log("ProtectedRoute: Auth state changed", {
+    // Only redirect after authentication has been checked (not while refreshing)
+    if (isRefreshing) return;
+    
+    console.log("ProtectedRoute: Auth state", {
       isLoading,
+      isRefreshing,
       isAuthenticated,
+      refreshFailed,
       userExists: !!user,
     });
 
-    // If not loading and not authenticated, redirect to login
-    if ((!isLoading || hasTimedOut) && !isAuthenticated) {
+    // If auth refresh is complete and not authenticated, redirect to login
+    if (!isAuthenticated) {
       console.log("ProtectedRoute: Redirecting to login");
       router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+      return;
     }
 
     // If user is authenticated but email is not verified and verification is required
     if (
-      !isLoading &&
       isAuthenticated &&
       !allowUnverified &&
       user?.email_confirmed_at === null
@@ -73,16 +81,17 @@ export default function ProtectedRoute({
     }
   }, [
     isLoading,
+    isRefreshing,
     isAuthenticated,
+    refreshFailed,
     router,
     pathname,
     user,
     allowUnverified,
-    hasTimedOut,
   ]);
 
-  // Show loading state
-  if (isLoading && !hasTimedOut) {
+  // Show loading state while refreshing auth
+  if (isRefreshing || (isLoading && !refreshFailed)) {
     return (
       <div
         data-testid="loading"

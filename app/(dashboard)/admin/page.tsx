@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -79,7 +79,7 @@ export default function AdminDashboard() {
   const [recentActivity, setRecentActivity] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setIsLoading(true);
 
     try {
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const setMockData = () => {
     setStats({
@@ -192,7 +192,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
   const handleRefresh = () => {
     fetchDashboardData();

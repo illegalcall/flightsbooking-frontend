@@ -92,7 +92,7 @@ interface BookingState {
   selectBooking: (id: string) => void;
   updateFilters: (filters: Partial<BookingFilters>) => void;
   getFilteredBookings: () => Booking[];
-  checkInPassenger: (bookingId: string, passengerId: string) => Promise<void>;
+  checkInPassenger: (bookingId: string) => Promise<void>;
   cancelBooking: (id: string) => Promise<void>;
   downloadETicket: (id: string) => Promise<boolean>;
 }
@@ -294,7 +294,7 @@ export const useBookingStore = create<BookingState>()(
       },
       
       // Check-in passenger
-      checkInPassenger: async (bookingId: string, passengerId: string) => {
+      checkInPassenger: async (bookingId: string) => {
         set({ isLoading: true });
         try {
           // Simulate API call
@@ -339,7 +339,7 @@ export const useBookingStore = create<BookingState>()(
               if (booking.id === id) {
                 return {
                   ...booking,
-                  status: 'cancelled',
+                  status: 'cancelled' as const,
                 };
               }
               return booking;

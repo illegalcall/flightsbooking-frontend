@@ -72,7 +72,7 @@ export default function BookingsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(5);
+  const totalPages = 5;
 
   useEffect(() => {
     // In a real app, you would fetch this data from the API

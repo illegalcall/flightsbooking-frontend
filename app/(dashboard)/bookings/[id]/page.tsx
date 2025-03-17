@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { useBookingStore, Booking } from '@/lib/store/useBookingStore';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,10 +10,15 @@ import { useRouter } from 'next/navigation';
 import BookingDetails from '@/components/booking/BookingDetails';
 import { toast } from '@/components/ui/use-toast';
 
-export default function BookingPage({ params }: { params: { id: string } }) {
+type BookingPageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default function BookingPage({ params }: BookingPageProps) {
   const router = useRouter();
   const { bookings, isLoading, fetchBookings, downloadETicket } = useBookingStore();
   const [booking, setBooking] = useState<Booking | null>(null);
+  const paramsData = use(params);
 
   useEffect(() => {
     const loadBookings = async () => {
@@ -23,14 +28,14 @@ export default function BookingPage({ params }: { params: { id: string } }) {
       }
       
       // Find the booking with the given ID
-      const found = bookings.find(b => b.id === params.id);
+      const found = bookings.find(b => b.id === paramsData.id);
       if (found) {
         setBooking(found);
       } else {
         // Booking not found, show error and redirect
         toast({
           title: 'Booking Not Found',
-          description: `We couldn't find a booking with the ID ${params.id}`,
+          description: `We couldn't find a booking with the ID ${paramsData.id}`,
           variant: 'destructive',
         });
         
@@ -42,7 +47,7 @@ export default function BookingPage({ params }: { params: { id: string } }) {
     };
 
     loadBookings();
-  }, [bookings, fetchBookings, params.id, router]);
+  }, [bookings, fetchBookings, paramsData.id, router]);
 
   const handleDownloadTicket = async () => {
     if (!booking) return;

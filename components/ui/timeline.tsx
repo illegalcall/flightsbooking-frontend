@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-interface TimelineProps extends React.HTMLAttributes<HTMLDivElement> {}
+type TimelineProps = React.HTMLAttributes<HTMLDivElement>;
 
 const Timeline = React.forwardRef<HTMLDivElement, TimelineProps>(
   ({ className, children, ...props }, ref) => (
@@ -16,7 +16,7 @@ const Timeline = React.forwardRef<HTMLDivElement, TimelineProps>(
 );
 Timeline.displayName = "Timeline";
 
-interface TimelineItemProps extends React.HTMLAttributes<HTMLDivElement> {}
+type TimelineItemProps = React.HTMLAttributes<HTMLDivElement>;
 
 const TimelineItem = React.forwardRef<HTMLDivElement, TimelineItemProps>(
   ({ className, children, ...props }, ref) => (
@@ -31,7 +31,7 @@ const TimelineItem = React.forwardRef<HTMLDivElement, TimelineItemProps>(
 );
 TimelineItem.displayName = "TimelineItem";
 
-interface TimelineSeparatorProps extends React.HTMLAttributes<HTMLDivElement> {}
+type TimelineSeparatorProps = React.HTMLAttributes<HTMLDivElement>;
 
 const TimelineSeparator = React.forwardRef<HTMLDivElement, TimelineSeparatorProps>(
   ({ className, children, ...props }, ref) => (
@@ -78,7 +78,7 @@ const TimelineDot = React.forwardRef<HTMLDivElement, TimelineDotProps>(
 );
 TimelineDot.displayName = "TimelineDot";
 
-interface TimelineConnectorProps extends React.HTMLAttributes<HTMLDivElement> {}
+type TimelineConnectorProps = React.HTMLAttributes<HTMLDivElement>;
 
 const TimelineConnector = React.forwardRef<HTMLDivElement, TimelineConnectorProps>(
   ({ className, ...props }, ref) => (
@@ -91,7 +91,7 @@ const TimelineConnector = React.forwardRef<HTMLDivElement, TimelineConnectorProp
 );
 TimelineConnector.displayName = "TimelineConnector";
 
-interface TimelineContentProps extends React.HTMLAttributes<HTMLDivElement> {}
+type TimelineContentProps = React.HTMLAttributes<HTMLDivElement>;
 
 const TimelineContent = React.forwardRef<HTMLDivElement, TimelineContentProps>(
   ({ className, children, ...props }, ref) => (

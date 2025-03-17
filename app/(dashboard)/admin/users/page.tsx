@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -69,7 +69,7 @@ export default function UsersPage() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [limit] = useState(10);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
       // Prepare filters for API call
@@ -86,9 +86,11 @@ export default function UsersPage() {
       const response = await adminApi.listUsers(filters);
 
       if (response.success && response.data) {
-        setUsers(response.data.data as User[]);
-        setTotalUsers(response.data.total as number);
-        setTotalPages(Math.ceil((response.data.total as number) / limit));
+        // Type assertion for response data
+        const responseData = response.data as { data: User[]; total: number };
+        setUsers(responseData.data);
+        setTotalUsers(responseData.total);
+        setTotalPages(Math.ceil(responseData.total / limit));
       } else {
         toast({
           title: "Error",
@@ -100,8 +102,8 @@ export default function UsersPage() {
           setMockData();
         }
       }
-    } catch (error: any) {
-      console.error("Error fetching users:", error);
+    } catch (_error) {
+      console.error("Error fetching users:", _error);
       // Fall back to mock data if API call fails in development
       if (process.env.NODE_ENV === "development") {
         setMockData();
@@ -109,7 +111,7 @@ export default function UsersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, limit, searchQuery, roleFilter, statusFilter]);
 
   const setMockData = () => {
     // Mock data for development and testing
@@ -167,7 +169,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, roleFilter, statusFilter]);
+  }, [currentPage, roleFilter, statusFilter, fetchUsers]);
 
   // Debounced search handler
   useEffect(() => {
@@ -180,7 +182,7 @@ export default function UsersPage() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, currentPage, fetchUsers]);
 
   // Filter users based on search query and filters
   const filteredUsers = users.filter((user) => {
@@ -223,7 +225,8 @@ export default function UsersPage() {
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (_error) {
+      console.error("Error updating user role:", _error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -249,7 +252,8 @@ export default function UsersPage() {
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (_error) {
+      console.error("Error disabling user:", _error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -444,12 +448,13 @@ export default function UsersPage() {
                 <Pagination>
                   <PaginationContent>
                     <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() =>
-                          setCurrentPage((prev) => Math.max(prev - 1, 1))
-                        }
-                        disabled={currentPage === 1}
-                      />
+                      {currentPage > 1 ? (
+                        <PaginationPrevious
+                          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        />
+                      ) : (
+                        <PaginationPrevious className="pointer-events-none opacity-50" />
+                      )}
                     </PaginationItem>
                     {Array.from({ length: Math.min(5, totalPages) }).map(
                       (_, i) => {
@@ -467,14 +472,13 @@ export default function UsersPage() {
                       }
                     )}
                     <PaginationItem>
-                      <PaginationNext
-                        onClick={() =>
-                          setCurrentPage((prev) =>
-                            Math.min(prev + 1, totalPages)
-                          )
-                        }
-                        disabled={currentPage === totalPages}
-                      />
+                      {currentPage < totalPages ? (
+                        <PaginationNext
+                          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                        />
+                      ) : (
+                        <PaginationNext className="pointer-events-none opacity-50" />
+                      )}
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>

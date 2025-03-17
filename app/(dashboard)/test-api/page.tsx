@@ -1,17 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { bookingApi } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader } from "lucide-react";
 
 export default function TestBookingsAPI() {
-  const [bookings, setBookings] = useState<any[]>([]);
+  // Define interface to match the API response structure
+  interface ApiBooking {
+    id: string;
+    bookingReference: string;
+    flightId: string;
+    selectedCabin: string;
+    totalAmount: number;
+    bookedSeats: string[];
+    createdAt: string;
+    status: string;
+    passengerDetails: {
+      fullName: string;
+      age: number;
+      documentNumber?: string;
+      specialRequests?: string;
+    }[];
+  }
+
+  const [bookings, setBookings] = useState<ApiBooking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -30,45 +48,41 @@ export default function TestBookingsAPI() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [fetchBookings]);
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">Bookings API Test</h1>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">API Test - Bookings</h1>
       
-      <div className="mb-4">
-        <Button onClick={fetchBookings} disabled={isLoading}>
+      <div className="mb-6">
+        <Button 
+          onClick={fetchBookings}
+          disabled={isLoading}
+        >
           {isLoading ? (
             <>
               <Loader className="mr-2 h-4 w-4 animate-spin" />
               Loading...
             </>
           ) : (
-            "Refresh Bookings"
+            <>Fetch Bookings</>
           )}
         </Button>
       </div>
       
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          <p><strong>Error:</strong> {error}</p>
+          {error}
         </div>
       )}
       
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2">Loading bookings...</span>
-        </div>
-      ) : bookings.length === 0 ? (
-        <p className="text-center py-12 text-muted-foreground">No bookings found.</p>
-      ) : (
-        <div className="grid gap-4">
-          {bookings.map((booking) => (
+      <div className="grid gap-6">
+        {bookings.length > 0 ? (
+          bookings.map((booking) => (
             <Card key={booking.id}>
               <CardHeader>
                 <CardTitle className="flex justify-between">
@@ -89,7 +103,7 @@ export default function TestBookingsAPI() {
                   <div className="mt-2">
                     <h3 className="font-semibold mb-1">Passengers:</h3>
                     <ul className="list-disc pl-5">
-                      {booking.passengerDetails.map((passenger: any, index: number) => (
+                      {booking.passengerDetails.map((passenger, index) => (
                         <li key={index}>
                           {passenger.fullName} (Age: {passenger.age})
                           {passenger.documentNumber && `, Doc: ${passenger.documentNumber}`}
@@ -101,15 +115,12 @@ export default function TestBookingsAPI() {
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
-      
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-2">Raw API Response:</h2>
-        <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96">
-          {JSON.stringify(bookings, null, 2)}
-        </pre>
+          ))
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            No bookings found. Click &quot;Fetch Bookings&quot; to load data.
+          </div>
+        )}
       </div>
     </div>
   );

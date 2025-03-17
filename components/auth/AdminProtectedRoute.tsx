@@ -9,6 +9,9 @@ interface AdminProtectedRouteProps {
   children?: React.ReactNode;
 }
 
+const ADMIN_ROLES = ['admin', 'ADMIN', 'service_role'] as const;
+type AdminRole = typeof ADMIN_ROLES[number];
+
 /**
  * A component that protects routes requiring admin authentication.
  * Extends the basic ProtectedRoute functionality by also checking for admin role.
@@ -19,111 +22,124 @@ export default function AdminProtectedRoute({
   const router = useRouter();
   const pathname = usePathname();
   const { isLoading, isAuthenticated, user, refreshAuth } = useAuthStore();
-  const [hasTimedOut, setHasTimedOut] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(true);
+  const [refreshFailed, setRefreshFailed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-
-  // Remove development bypass
-  // const BYPASS_ADMIN_CHECK = true;
 
   // Refresh auth when the component mounts
   useEffect(() => {
     console.log("AdminProtectedRoute: Refreshing auth");
-
-    const timeoutId = setTimeout(() => {
-      if (isLoading) {
-        console.log("AdminProtectedRoute: Auth refresh timed out");
-        setHasTimedOut(true);
-      }
-    }, 5000);
-
+    
+    let isMounted = true;
+    setIsRefreshing(true);
+    
     refreshAuth()
       .then(() => {
-        console.log("AdminProtectedRoute: Auth refreshed successfully");
-        clearTimeout(timeoutId);
+        if (isMounted) {
+          console.log("AdminProtectedRoute: Auth refreshed successfully");
+          setIsRefreshing(false);
+        }
       })
       .catch((error) => {
-        console.error("AdminProtectedRoute: Auth refresh failed", error);
-        clearTimeout(timeoutId);
-        setHasTimedOut(true);
+        if (isMounted) {
+          console.error("AdminProtectedRoute: Auth refresh failed", error);
+          setIsRefreshing(false);
+          setRefreshFailed(true);
+        }
       });
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      isMounted = false;
+    };
   }, [refreshAuth]);
 
   // Check for admin status whenever the user changes
   useEffect(() => {
     if (!isLoading && user) {
-      console.log(
-        "AdminProtectedRoute: User data:",
-        JSON.stringify(user, null, 2)
-      );
+      // Extract JWT token from localStorage
+      const supabaseToken = localStorage.getItem('sb-qhuldkrjtcfqamzqjwgf-auth-token');
+      let decodedToken = null;
+      
+      if (supabaseToken) {
+        try {
+          const { access_token } = JSON.parse(supabaseToken);
+          // Get the payload part of the JWT (second part)
+          const payload = access_token.split('.')[1];
+          // Decode the base64 payload
+          decodedToken = JSON.parse(atob(payload));
+        } catch (error) {
+          console.error("Failed to decode JWT token:", error);
+        }
+      }
 
-      // According to the Prisma schema, admin role is represented as "ADMIN" (uppercase)
-      // UserProfile.role is stored as UserRole.ADMIN enum value
+      console.log("AdminProtectedRoute: Auth data", {
+        userRole: user.role,
+        decodedTokenRole: decodedToken?.role,
+        appMetadata: user.app_metadata,
+        userMetadata: user.user_metadata
+      });
 
-      // Get roles from various possible locations
-      const appMetadataRole = user.app_metadata?.role;
-      const userMetadataRole = user.user_metadata?.role;
-      const userRole = user.role;
-
-      // The backend uses UserRole.ADMIN which is "ADMIN" in uppercase
-      const isUserAdmin =
-        appMetadataRole === "ADMIN" ||
-        userMetadataRole === "ADMIN" ||
-        // TODO: Remove this once we have a proper admin role in the database
-        userRole === "ADMIN" ||
-        true;
+      // Check admin status from multiple sources
+      const isUserAdmin = 
+        // Check JWT token role
+        (decodedToken?.role && ADMIN_ROLES.includes(decodedToken.role as AdminRole)) ||
+        // Check user object role
+        (user.role && ADMIN_ROLES.includes(user.role as AdminRole)) ||
+        // Check app_metadata roles
+        (Array.isArray(user.app_metadata?.roles) && 
+          user.app_metadata.roles.some(role => ADMIN_ROLES.includes(role as AdminRole))) ||
+        // Check user_metadata roles
+        (Array.isArray(user.user_metadata?.roles) && 
+          user.user_metadata.roles.some(role => ADMIN_ROLES.includes(role as AdminRole)));
 
       setIsAdmin(isUserAdmin);
 
       console.log("AdminProtectedRoute: Admin check result:", {
-        appMetadataRole,
-        userMetadataRole,
-        userRole,
         isAdmin: isUserAdmin,
+        tokenRole: decodedToken?.role,
+        userRole: user.role,
+        appMetadataRoles: user.app_metadata?.roles,
+        userMetadataRoles: user.user_metadata?.roles
       });
     }
-  }, [isLoading, user, isAuthenticated]);
+  }, [isLoading, user]);
 
   // Handle redirects based on auth state
   useEffect(() => {
-    console.log("AdminProtectedRoute: Auth state changed", {
+    if (isRefreshing) {
+      console.log("AdminProtectedRoute: Still refreshing auth, waiting...");
+      return;
+    }
+    
+    console.log("AdminProtectedRoute: Auth state", {
       isLoading,
+      isRefreshing,
       isAuthenticated,
+      refreshFailed,
       userExists: !!user,
       isAdmin,
       pathname,
     });
 
-    // Only make decisions after loading is complete or timed out
-    if (isLoading && !hasTimedOut) {
-      console.log("AdminProtectedRoute: Still loading, waiting...");
-      return;
-    }
-
     // If not authenticated, redirect to login
     if (!isAuthenticated) {
-      console.log(
-        "AdminProtectedRoute: Not authenticated, redirecting to login"
-      );
+      console.log("AdminProtectedRoute: Not authenticated, redirecting to login");
       router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
       return;
     }
 
     // If authenticated but not admin, redirect to dashboard
-    if (isAuthenticated && !isAdmin) {
+    if (!isAdmin) {
       console.log("AdminProtectedRoute: Not admin, redirecting to dashboard");
-      router.push("/dashboard");
+      router.push("/");
       return;
     }
 
-    console.log(
-      "AdminProtectedRoute: User is authorized to access admin dashboard"
-    );
-  }, [isLoading, isAuthenticated, router, pathname, isAdmin, hasTimedOut]);
+    console.log("AdminProtectedRoute: User is authorized to access admin dashboard");
+  }, [isRefreshing, isAuthenticated, router, pathname, isAdmin, user, isLoading, refreshFailed]);
 
-  // Show loading state
-  if (isLoading && !hasTimedOut) {
+  // Show loading state while refreshing auth
+  if (isRefreshing) {
     return (
       <div
         data-testid="loading"
@@ -136,7 +152,7 @@ export default function AdminProtectedRoute({
   }
 
   // If not authenticated, show a message instead of redirecting instantly
-  if (!isAuthenticated && !isLoading) {
+  if (!isAuthenticated) {
     return (
       <div
         data-testid="not-authenticated"
@@ -157,7 +173,7 @@ export default function AdminProtectedRoute({
   }
 
   // If authenticated but not admin, show access denied
-  if (isAuthenticated && !isAdmin && !isLoading) {
+  if (!isAdmin) {
     return (
       <div
         data-testid="not-admin"
@@ -169,7 +185,7 @@ export default function AdminProtectedRoute({
         </p>
         <button
           className="bg-primary text-white px-4 py-2 rounded"
-          onClick={() => router.push("/dashboard")}
+          onClick={() => router.push("/")}
         >
           Go to Dashboard
         </button>
